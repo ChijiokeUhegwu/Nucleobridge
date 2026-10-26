@@ -1,0 +1,141 @@
+# Command to confirm raw color values in the codebase (in Powershell)
+PS C:\Users\Chijioke Uhegwu\Desktop\Product Folder\Nucleobridge> Get-ChildItem -Recurse -Exclude node_modules,.git | Select-String -Pattern "#[0-9a-fA-F]{3,6}\b" 
+
+task-01-design-system\docs\colour-roles.md:5:The primary brand colour is 
+**`#0F6E56`**. This deep green-teal provides
+task-01-design-system\docs\colour-roles.md:13:The primary colour, `#0F6E56`,     
+was pinned to **Primary 40** while generating the tonal palettes using Claude    
+so that the generated tonal palette retains the selected brand colour at that    
+tone rather than substituting a nearby value. This keeps the chosen brand        
+colour exact and gives the rest of the palette a consistent reference point      
+from which to generate tonal variations.
+task-01-design-system\docs\colour-roles.md:16:the value assigned to Tone 40 
+(`#086B53`), which differed from the intended brand colour. After pinning, Tone  
+40 is anchored to `#0F6E56`. However, the visible change was limited to only     
+Tone 40, other generated tones were the same for both the pinned and unpinned    
+versions.
+task-01-design-system\scripts\convert-tokens.js:137:    ' *    - Elevated drop 
+shadows tinted with primary brand tone (#0F6E56).',
+task-01-design-system\scripts\convert-tokens.js:188:          toneSuffix = '0';  
+// error tone 0 (#000000)
+task-01-design-system\scripts\convert-tokens.js:232:      '   * Tinted with      
+primary brand color (#0F6E56) for cohesive visual depth.',
+task-01-design-system\tokens.css:23: *    - Elevated drop shadows tinted with    
+primary brand tone (#0F6E56).
+task-01-design-system\tokens.css:32:  --key-color-primary: #0f6e56;
+task-01-design-system\tokens.css:33:  --key-color-secondary: #83958c;
+task-01-design-system\tokens.css:34:  --key-color-tertiary: #7b94a3;
+task-01-design-system\tokens.css:35:  --key-color-neutral: #717975;
+task-01-design-system\tokens.css:36:  --key-color-neutral-variant: #6a7b73;      
+task-01-design-system\tokens.css:37:  --key-color-error: #ff1111;
+task-01-design-system\tokens.css:38:  --key-color-warning: #ffa500;
+task-01-design-system\tokens.css:45:  --palette-primary-0: #000000;
+task-01-design-system\tokens.css:46:  --palette-primary-10: #002117;
+task-01-design-system\tokens.css:47:  --palette-primary-20: #00382a;
+task-01-design-system\tokens.css:48:  --palette-primary-30: #00513e;
+task-01-design-system\tokens.css:49:  --palette-primary-40: #0f6e56;
+task-01-design-system\tokens.css:50:  --palette-primary-50: #30856b;
+task-01-design-system\tokens.css:51:  --palette-primary-60: #4d9f84;
+task-01-design-system\tokens.css:52:  --palette-primary-70: #69ba9e;
+task-01-design-system\tokens.css:53:  --palette-primary-80: #84d6b9;
+task-01-design-system\tokens.css:54:  --palette-primary-90: #a0f3d4;
+task-01-design-system\tokens.css:55:  --palette-primary-95: #baffe4;
+task-01-design-system\tokens.css:56:  --palette-primary-98: #e7fff3;
+task-01-design-system\tokens.css:57:  --palette-primary-99: #f4fff8;
+task-01-design-system\tokens.css:58:  --palette-primary-100: #ffffff;
+task-01-design-system\tokens.css:61:  --palette-secondary-0: #000000;
+task-01-design-system\tokens.css:62:  --palette-secondary-10: #0f1f18;
+task-01-design-system\tokens.css:63:  --palette-secondary-20: #24342d;
+task-01-design-system\tokens.css:64:  --palette-secondary-30: #3a4a43;
+task-01-design-system\tokens.css:65:  --palette-secondary-40: #51625a;
+task-01-design-system\tokens.css:66:  --palette-secondary-50: #697b72;
+task-01-design-system\tokens.css:67:  --palette-secondary-60: #83958c;
+task-01-design-system\tokens.css:68:  --palette-secondary-70: #9dafa6;
+task-01-design-system\tokens.css:69:  --palette-secondary-80: #b8cbc1;
+task-01-design-system\tokens.css:70:  --palette-secondary-90: #d4e7dd;
+task-01-design-system\tokens.css:71:  --palette-secondary-95: #e2f5eb;
+task-01-design-system\tokens.css:72:  --palette-secondary-98: #ebfef3;
+task-01-design-system\tokens.css:73:  --palette-secondary-99: #f4fff7;
+task-01-design-system\tokens.css:74:  --palette-secondary-100: #ffffff;
+task-01-design-system\tokens.css:77:  --palette-tertiary-0: #000000;
+task-01-design-system\tokens.css:78:  --palette-tertiary-10: #031e2a;
+task-01-design-system\tokens.css:79:  --palette-tertiary-20: #1a3340;
+task-01-design-system\tokens.css:80:  --palette-tertiary-30: #324a57;
+task-01-design-system\tokens.css:81:  --palette-tertiary-40: #49626f;
+task-01-design-system\tokens.css:82:  --palette-tertiary-50: #627a89;
+task-01-design-system\tokens.css:83:  --palette-tertiary-60: #7b94a3;
+task-01-design-system\tokens.css:84:  --palette-tertiary-70: #95afbe;
+task-01-design-system\tokens.css:85:  --palette-tertiary-80: #b0cada;
+task-01-design-system\tokens.css:86:  --palette-tertiary-90: #cce6f7;
+task-01-design-system\tokens.css:87:  --palette-tertiary-95: #e2f3ff;
+task-01-design-system\tokens.css:88:  --palette-tertiary-98: #f5faff;
+task-01-design-system\tokens.css:89:  --palette-tertiary-99: #fbfcff;
+task-01-design-system\tokens.css:90:  --palette-tertiary-100: #ffffff;
+task-01-design-system\tokens.css:93:  --palette-neutral-0: #000000;
+task-01-design-system\tokens.css:94:  --palette-neutral-10: #161d1a;
+task-01-design-system\tokens.css:95:  --palette-neutral-20: #2a322f;
+task-01-design-system\tokens.css:96:  --palette-neutral-30: #414845;
+task-01-design-system\tokens.css:97:  --palette-neutral-40: #58605c;
+task-01-design-system\tokens.css:98:  --palette-neutral-50: #717975;
+task-01-design-system\tokens.css:99:  --palette-neutral-60: #8a938e;
+task-01-design-system\tokens.css:100:  --palette-neutral-70: #a5ada9;
+task-01-design-system\tokens.css:101:  --palette-neutral-80: #c0c8c4;
+task-01-design-system\tokens.css:102:  --palette-neutral-90: #dce4df;
+task-01-design-system\tokens.css:103:  --palette-neutral-95: #ebf3ee;
+task-01-design-system\tokens.css:104:  --palette-neutral-98: #f3fbf6;
+task-01-design-system\tokens.css:105:  --palette-neutral-99: #f6fef9;
+task-01-design-system\tokens.css:106:  --palette-neutral-100: #ffffff;
+task-01-design-system\tokens.css:107:  --palette-neutral-4: #08100d;
+task-01-design-system\tokens.css:108:  --palette-neutral-6: #0e1512;
+task-01-design-system\tokens.css:109:  --palette-neutral-12: #1a211e;
+task-01-design-system\tokens.css:110:  --palette-neutral-17: #242c29;
+task-01-design-system\tokens.css:111:  --palette-neutral-22: #2f3633;
+task-01-design-system\tokens.css:112:  --palette-neutral-24: #333b38;
+task-01-design-system\tokens.css:113:  --palette-neutral-87: #d4dcd7;
+task-01-design-system\tokens.css:114:  --palette-neutral-92: #e2eae5;
+task-01-design-system\tokens.css:115:  --palette-neutral-94: #e8f0eb;
+task-01-design-system\tokens.css:116:  --palette-neutral-96: #eef5f0;
+task-01-design-system\tokens.css:119:  --palette-neutral-variant-0: #000000;     
+task-01-design-system\tokens.css:120:  --palette-neutral-variant-10: #0f1f19;
+task-01-design-system\tokens.css:121:  --palette-neutral-variant-20: #24342d;    
+task-01-design-system\tokens.css:122:  --palette-neutral-variant-30: #3a4a43;    
+task-01-design-system\tokens.css:123:  --palette-neutral-variant-40: #51625a;    
+task-01-design-system\tokens.css:124:  --palette-neutral-variant-50: #6a7b73;    
+task-01-design-system\tokens.css:125:  --palette-neutral-variant-60: #83958c;    
+task-01-design-system\tokens.css:126:  --palette-neutral-variant-70: #9eafa6;    
+task-01-design-system\tokens.css:127:  --palette-neutral-variant-80: #b9cbc1;
+task-01-design-system\tokens.css:128:  --palette-neutral-variant-90: #d5e7dd;    
+task-01-design-system\tokens.css:129:  --palette-neutral-variant-95: #e3f5eb;    
+task-01-design-system\tokens.css:130:  --palette-neutral-variant-98: #ebfef4;    
+task-01-design-system\tokens.css:131:  --palette-neutral-variant-99: #f4fff8;    
+task-01-design-system\tokens.css:132:  --palette-neutral-variant-100: #ffffff;   
+task-01-design-system\tokens.css:135:  --palette-error-0: #000000;
+task-01-design-system\tokens.css:136:  --palette-error-10: #410000;
+task-01-design-system\tokens.css:137:  --palette-error-20: #690001;
+task-01-design-system\tokens.css:138:  --palette-error-30: #930003;
+task-01-design-system\tokens.css:139:  --palette-error-40: #c00005;
+task-01-design-system\tokens.css:140:  --palette-error-50: #ef0009;
+task-01-design-system\tokens.css:141:  --palette-error-60: #ff5543;
+task-01-design-system\tokens.css:142:  --palette-error-70: #ff8a7a;
+task-01-design-system\tokens.css:143:  --palette-error-80: #ffb4a9;
+task-01-design-system\tokens.css:144:  --palette-error-90: #ffdad5;
+task-01-design-system\tokens.css:145:  --palette-error-95: #ffedea;
+task-01-design-system\tokens.css:146:  --palette-error-98: #fff8f7;
+task-01-design-system\tokens.css:147:  --palette-error-99: #fffbfa;
+task-01-design-system\tokens.css:148:  --palette-error-100: #ffffff;
+task-01-design-system\tokens.css:151:  --palette-warning-0: #000000;
+task-01-design-system\tokens.css:152:  --palette-warning-10: #2a1700;
+task-01-design-system\tokens.css:153:  --palette-warning-20: #462a00;
+task-01-design-system\tokens.css:154:  --palette-warning-30: #653e00;
+task-01-design-system\tokens.css:155:  --palette-warning-40: #855400;
+task-01-design-system\tokens.css:156:  --palette-warning-50: #a66a00;
+task-01-design-system\tokens.css:157:  --palette-warning-60: #c98100;
+task-01-design-system\tokens.css:158:  --palette-warning-70: #ed9900;
+task-01-design-system\tokens.css:159:  --palette-warning-80: #ffb95c;
+task-01-design-system\tokens.css:160:  --palette-warning-90: #ffddb7;
+task-01-design-system\tokens.css:161:  --palette-warning-95: #ffeede;
+task-01-design-system\tokens.css:162:  --palette-warning-98: #fff8f4;
+task-01-design-system\tokens.css:163:  --palette-warning-99: #fffbfa;
+task-01-design-system\tokens.css:164:  --palette-warning-100: #ffffff;
+task-01-design-system\tokens.css:229:   * Tinted with primary brand color        
+(#0F6E56) for cohesive visual depth.
