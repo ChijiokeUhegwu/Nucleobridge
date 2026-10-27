@@ -1,0 +1,8 @@
+C:\Users\Chijioke Uhegwu\Desktop\Product Folder\Nucleobridge>git log --oneline --graph -n 10
+* c780535 (HEAD -> main, origin/main) Update the README file for task-01
+* 564c211 feat(design-system): implement design tokens, documentation, compiler scripts, and login demo
+* 17293e3 Set up project repository and update project details in the README.md
+
+
+Why a semantic role should not point directly to a raw hex value
+When a semantic role points directly to a raw hex value instead of a primitive palette token, it breaks the chain of inheritance and isolates that element from systemic updates. As demonstrated by the inconsistent UI, updating the core brand color only cascaded to the roles that maintained proper aliasing. This proves that strict token referencing is mandatory to maintain a single source of truth and ensure scalable, predictable design updates across an entire application.
