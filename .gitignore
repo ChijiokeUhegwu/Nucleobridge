@@ -21,6 +21,8 @@ dist/
 
 # Specifications and internal documents
 nucleobridge-prd.md
+AGENTS.md
+.agents/**
 
 # Debug and system logs
 npm-debug.log*
