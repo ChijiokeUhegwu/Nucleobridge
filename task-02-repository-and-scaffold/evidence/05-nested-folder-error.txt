@@ -1,0 +1,9 @@
+C:\Users\Chijioke Uhegwu\Desktop\Product Folder\Nucleobridge>npm run dev
+npm error code ENOENT
+npm error syscall open
+npm error path C:\Users\Chijioke Uhegwu\Desktop\Product Folder\Nucleobridge\package.jsonnpm error errno -4058
+npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, 
+open 'C:\Users\Chijioke Uhegwu\Desktop\Product Folder\Nucleobridge\package.json'        
+npm error enoent This is related to npm not being able to find a file.
+npm error enoent
+npm error A complete log of this run can be found in: C:\Users\Chijioke Uhegwu\AppData\Local\npm-cache\_logs\2026-10-29T18_06_39_736Z-debug-0.log

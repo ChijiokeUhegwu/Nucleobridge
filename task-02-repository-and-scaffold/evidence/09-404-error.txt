@@ -1,0 +1,9 @@
+ Starting...
+ ✓ Ready in 3.6s
+ ○ Compiling / ...
+ ✓ Compiled / in 58.9s (470 modules)
+ GET / 200 in 61191ms
+ ✓ Compiled in 42ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 2.4s (441 modules)
+ GET / 404 in 369ms

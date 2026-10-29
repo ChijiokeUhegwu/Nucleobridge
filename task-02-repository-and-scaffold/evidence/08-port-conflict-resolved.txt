@@ -1,0 +1,24 @@
+# Command to find conflicting ports 
+netstat -ano | findstr :3000.
+
+# Output
+Users\Chijioke Uhegwu\Desktop\Product Folder\Nucleobridge>
+  TCP    0.0.0.0:3000           0.0.0.0:0              LISTENING       13768
+  TCP    [::]:3000              [::]:0                 LISTENING       13768
+PS C:\Users\Chijioke Uhegwu\Desktop\Product Folder\Nucleobridge> kill /PID 13768
+
+# Command to kill the process
+kill 13768
+
+# Second terminal running the app on 3001 after killing 3000
+> nucleobridge@0.1.0 dev
+> next dev
+ Port 3000 is in use, trying 3001 instead.
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3001
+
+ ✓ Starting...
+ ✓ Ready in 3.6s
+ ○ Compiling / ...
+ ✓ Compiled / in 58.9s (470 modules)
+ GET / 200 in 61191ms

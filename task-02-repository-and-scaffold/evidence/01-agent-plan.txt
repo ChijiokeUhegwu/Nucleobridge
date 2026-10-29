@@ -1,0 +1,157 @@
+Analyzed nucleobridge-prd.md:L1-800
+Analyzed main-tokens.css:L1-403
+Analyzed nucleobridge-prd.md:L1-800
+Analyzed nucleobridge-prd.md:L801-1309
+Analyzed access-and-routes.md:L1-57
+Analyzed schema.md:L1-50
+Analyzed testing.md:L1-74
+Analyzed payments.md:L1-65
+Analyzed ai-mentor.md:L1-84
+Analyzed browser-runtime.md:L1-40
+Analyzed ci.md:L1-34
+Analyzed content-authoring.md:L1-40
+Analyzed instrumentation.md:L1-69
+Analyzed vector-search.md:L1-57
+Analyzed README.md:L1-71
+Analyzed interview-answers.md:L1-85
+Analyzing package.json:L1
+Analyzed README.md:L1-140
+Analyzing login.html:L1
+
+I have completed steps 1 and 2 by thoroughly reading all context files—including [AGENTS.md](file:///c:/Users/Chijioke%20Uhegwu/Desktop/Product%20Folder/Nucleobridge/AGENTS.md), [nucleobridge-prd.md](file:///c:/Users/Chijioke%20Uhegwu/Desktop/Product%20Folder/Nucleobridge/nucleobridge-prd.md), the entire [`.agents/rules/`](file:///c:/Users/Chijioke%20Uhegwu/Desktop/Product%20Folder/Nucleobridge/.agents/rules) directory, and the design system in [main-tokens.css](file:///c:/Users/Chijioke%20Uhegwu/Desktop/Product%20Folder/Nucleobridge/task-01-design-system/main-tokens.css).
+
+Before writing any code, here is the identification of discrepancies that require your clarification, followed by the complete summary of the project requirements, architecture, and design rules (Step 3).
+
+---
+
+## 1. Discrepancies and Clarifications Needed
+
+Before proceeding to write code, please clarify or confirm the following points where the prompt and context files touch on specifics:
+
+1. **PostgreSQL Version ("PostgreSQL 18"):**
+   - *Prompt:* Specifies "PostgreSQL 18".
+   - *Context:* [nucleobridge-prd.md:L459](file:///c:/Users/Chijioke%20Uhegwu/Desktop/Product%20Folder/Nucleobridge/nucleobridge-prd.md#L459) specifies managed PostgreSQL with pgvector (e.g., Neon or Supabase). PostgreSQL 18 is not yet released (PostgreSQL 16/17 are the current stable production releases with pgvector extensions).
+   - *Clarification:* We will configure Prisma with standard PostgreSQL connection URLs (`DATABASE_URL` pooled, `DIRECT_DATABASE_URL` direct for migrations) compatible with PostgreSQL 16/17+. Please confirm this is acceptable.
+2. **Framework & Runtime ("Node.js" vs Next.js App Router):**
+   - *Prompt:* Mentions "scaffolding the Nucleobridge application using Node.js, Prisma ORM, and PostgreSQL 18".
+   - *Context:* [nucleobridge-prd.md:L32](file:///c:/Users/Chijioke%20Uhegwu/Desktop/Product%20Folder/Nucleobridge/nucleobridge-prd.md#L32) and [structure.md](file:///c:/Users/Chijioke%20Uhegwu/Desktop/Product%20Folder/Nucleobridge/.agents/rules/structure.md) mandate **Next.js (App Router) with TypeScript** using the Node.js runtime for API route handlers (no edge routes).
+   - *Clarification:* We will initialize a Next.js (App Router) project with TypeScript under Node.js runtime.
+3. **Home Screen Specification:**
+   - *Prompt:* "Build a minimalistic home screen that takes up exactly 100vh."
+   - *Context:* Under [access-and-routes.md:L18-L19](file:///c:/Users/Chijioke%20Uhegwu/Desktop/Product%20Folder/Nucleobridge/.agents/rules/access-and-routes.md#L18-L19) and [nucleobridge-prd.md:L131](file:///c:/Users/Chijioke%20Uhegwu/Desktop/Product%20Folder/Nucleobridge/nucleobridge-prd.md#L131), a signed-out visitor sees only the sign-in page / catalog view (case study titles and access labels, no lesson content).
+   - *Clarification:* We will design the root home screen (`/`) as a clean, minimalistic 100vh hero/catalog layout featuring brand identity, case study track discovery cards with tier badges (`FREE` / `PAID`), and an entry point to sign in, strictly styled with semantic tokens.
+4. **File Structure Locations ([`structure.md`](file:///c:/Users/Chijioke%20Uhegwu/Desktop/Product%20Folder/Nucleobridge/.agents/rules/structure.md)):**
+   - *Context:* The table in [structure.md](file:///c:/Users/Chijioke%20Uhegwu/Desktop/Product%20Folder/Nucleobridge/.agents/rules/structure.md) has `(owner fills)` for code locations.
+   - *Clarification:* We propose standard Next.js App Router conventions:
+     - Root App directory: `src/app/` (`layout.tsx`, `page.tsx`, `globals.css`)
+     - API route handlers: `src/app/api/`
+     - Shared server libraries: `src/lib/` (e.g., `src/lib/prisma.ts`, `src/lib/access.ts`)
+     - Client components & hooks: `src/components/`
+     - Design tokens stylesheet: `src/styles/main-tokens.css` (imported by `src/app/globals.css`)
+     - Prisma schema: `prisma/schema.prisma`
+     - Web Worker code: `src/workers/`
+     - Content files: `content/`
+
+---
+
+## 2. Project Requirements & Architecture Summary
+
+### Core Purpose & Constraints
+- **Target Audience:** African bioinformatics students and researchers (e.g., personas Tunde and Chidi) working on low-spec hardware (~4 GB RAM laptops, mobile devices), on metered data bundles (~1.5 GB), and over unstable power and internet.
+- **Client Execution:** WebAssembly in browser Web Workers (Pyodide for Python, WebR for R, Biowasm for CLI utilities like `samtools`). Zero cloud sandboxes or Docker containers.
+- **In-Browser Verification:** Deterministic checks (Output, Property, Method checks) run inside the client worker in under 3 seconds without human grading.
+- **Resilience & Caching:** IndexedDB autosaves work every 5 seconds. Replays run on clean exits, and prompt for restore on tab crashes. Opened steps reopen offline within 24 hours.
+- **Business Model:** Freemium. Single PRO time-pass plan paid via Flutterwave in Naira (manual renewal, no recurring card debits). Paid content is strictly guarded.
+
+### The Five Learning Features (v1 Scope)
+1. **Guided Step Page:** CodeMirror 6 editor, terminal/console output, Markdown instructions, check runner, hint ladder. Stacks/tabs gracefully on smaller displays.
+2. **Check My Work:** Instant client-side automated grading with plain English feedback and localized error pattern matching.
+3. **Autosave and Resume:** Snapshot & command log storage in IndexedDB, server sync with `baseRevision` optimistic locking and conflict resolution.
+4. **Hint Ladder & AI Mentor:** 3 authored hints (gentle nudge -> concept reference -> shape of action). 4th rung is a Socratic RAG mentor using pgvector that **withholds final answers and code commands**, backed by hard daily token/cost ceilings and output filters.
+5. **Progress Map:** Visual track of case studies with statuses (`NOT_STARTED`, `IN_PROGRESS`, `PASSED`, `SKIPPED`) and access locks for free users.
+
+### Supporting Server Requirements
+- **Authentication:** Passwordless 6-digit email code (10-minute expiry, 3 requests/hour limit, 5-try lockout). 30-day JWT sessions checked in Node API routes.
+- **Access Guard (`assertStepAccess`):** Mandatory server guard across `/api/steps/:id/bundle`, `/api/steps/:id/datasets`, `/api/mentor`, and `/api/sync`.
+- **Payments:** Flutterwave redirect checkout. Idempotent fulfillment via `fulfillPayment(reference)` verified directly with Flutterwave API. Stacking time passes.
+- **Content Importer:** Validates content, splits markdown into headings/chunks (<300 tokens), embeds with 768-dimension vectors, writes `ContentChunk` via raw SQL.
+- **Privacy & NDPA 2023:** "Delete my data" cascades all user data while detaching user references on payment rows for accounting compliance.
+
+### What Version One Deliberately Excludes
+- No certificates, leaderboards, user forums, or live chat.
+- No video streaming or cloud execution.
+- No custom user file uploads or patient genomic data.
+- No auto-renewing subscriptions, coupons, or multi-seat licenses.
+- No admin dashboard screen (owner uses CLI scripts: `grant-pro`, `revoke-pro`, `mark-refunded`, `list-pending`).
+
+---
+
+## 3. Design System & Styling Rules Summary
+
+Per [main-tokens.css](file:///c:/Users/Chijioke%20Uhegwu/Desktop/Product%20Folder/Nucleobridge/task-01-design-system/main-tokens.css), [README.md](file:///c:/Users/Chijioke%20Uhegwu/Desktop/Product%20Folder/Nucleobridge/task-01-design-system/README.md), and [interview-answers.md](file:///c:/Users/Chijioke%20Uhegwu/Desktop/Product%20Folder/Nucleobridge/task-01-design-system/docs/interview-answers.md):
+
+1. **Zero Primitive Exposure:**
+   - No raw palette variables (e.g., `--palette-primary-40`, `--neutral-90`) or raw hardcoded hex/RGB/HSL codes in application code or component styles.
+   - Only semantic CSS tokens are permitted:
+     - Surfaces & Backgrounds: `var(--color-surface)`, `var(--color-background)`, `var(--color-surface-container)`, `var(--color-surface-container-high)`, etc.
+     - Content & Text: `var(--color-on-surface)`, `var(--color-on-background)`, `var(--color-on-surface-variant)`.
+     - Brand / Actions: `var(--color-primary)`, `var(--color-on-primary)`, `var(--color-primary-container)`, `var(--color-on-primary-container)`.
+     - Outlines & Dividers: `var(--color-outline)`, `var(--color-outline-variant)`.
+     - Feedback / States: `var(--color-error)`, `var(--color-warning)`, etc.
+2. **Dual-Theme Support (Light & Dark):**
+   - Identical variable names are mapped under `:root` (Light) and `@media (prefers-color-scheme: dark)` / `[data-theme="dark"]` (Dark).
+3. **Typography:**
+   - DM Sans font family (`var(--font-family-base)`).
+   - Strict 1.5 line-height ratio across 15 standard typography classes:
+     - Display: `.text-display-large`, `.text-display-medium`, `.text-display-small`
+     - Headline: `.text-headline-large`, `.text-headline-medium`, `.text-headline-small`
+     - Title: `.text-title-large`, `.text-title-medium`, `.text-title-small`
+     - Body: `.text-body-large`, `.text-body-medium`, `.text-body-small`
+     - Label: `.text-label-large`, `.text-label-medium`, `.text-label-small`
+4. **Elevation & Shadows:**
+   - Brand-tinted shadows: `var(--shadow-soft)`, `var(--shadow-medium)`, `var(--shadow-hard)` (tinted with `#0F6E56`).
+5. **Home Screen Specifications:**
+   - Exact `100vh` viewport height (`height: 100vh; overflow: hidden;` / `min-h-screen` viewport container).
+   - Minimalistic, focused layout featuring responsive navigation header, hero branding, case study track cards with access tier badges, and accessible action buttons.
+
+---
+
+## 4. Proposed Scaffold Action Plan (Upon Approval)
+
+Once you approve, I will execute the following steps:
+1. **Initialize Next.js App Router + TypeScript project structure:**
+   - Create `package.json`, `tsconfig.json`, `next.config.ts`, `.env.example`.
+   - Setup dependencies (Next.js, React, React-DOM, `@prisma/client`, and `prisma` as devDependency).
+2. **Setup Prisma Schema:**
+   - Create `prisma/schema.prisma` containing the complete 22-model schema specified in [nucleobridge-prd.md:L554-L994](file:///c:/Users/Chijioke%20Uhegwu/Desktop/Product%20Folder/Nucleobridge/nucleobridge-prd.md#L554-L994) and [nucleobridge-prd.md:L1083-L1114](file:///c:/Users/Chijioke%20Uhegwu/Desktop/Product%20Folder/Nucleobridge/nucleobridge-prd.md#L1083-L1114) (including `pgvector` vector extension and `ContentChunk`).
+   - Create singleton Prisma client helper at `src/lib/prisma.ts`.
+3. **Integrate Design Tokens:**
+   - Link or copy [main-tokens.css](file:///c:/Users/Chijioke%20Uhegwu/Desktop/Product%20Folder/Nucleobridge/task-01-design-system/main-tokens.css) into `src/styles/main-tokens.css`.
+   - Configure `src/app/globals.css` with reset styles and semantic variable bindings.
+4. **Build Root Layout & Minimalistic 100vh Home Screen:**
+   - `src/app/layout.tsx`: Base document structure referencing DM Sans and `globals.css`.
+   - `src/app/page.tsx`: Minimalistic, zero-hex-code home screen locked to exactly `100vh`, featuring semantic navigation, brand header, curriculum preview cards, and access badges.
+5. **Audit & Verification:**
+   - Validate that 100% of color styles consume semantic CSS tokens only.
+   - Verify zero primitive leakage and zero hardcoded color values.
+
+---
+
+## 5. Self-Audit Against User Instructions
+
+- [x] **Step 1:** Read all context files (`.agents/` folder, `AGENTS.md`, `nucleobridge-prd.md`) and `task-01-design-system/main-tokens.css`.
+- [x] **Step 2:** Identified file/prompt discrepancies (PostgreSQL version, Node.js/Next.js runtime, folder layout) and requested clarification.
+- [x] **Step 3:** Summarized requirements, architecture, and design rules; halted execution to wait for your explicit approval before writing any code.
+- [ ] **Step 4:** Foundational setup & folder structure (Pending approval).
+- [ ] **Step 5:** 100vh minimalistic home screen (Pending approval).
+- [ ] **Step 6:** Strict semantic token styling enforcement (Pending approval).
+- [ ] **Step 7:** File list and documented technical assumptions (Pending approval).
+- [ ] **Step 8:** Final response self-audit (Pending approval).
+
+---
+
+**STOPPING HERE:** As instructed in Step 3, I am waiting for your explicit approval and confirmation of the clarifications above before writing any code.
+
+Assumptions: none.
+
+Yes, having read through all the agent wrote in comparison to my context files, I agree that no assumptions were made.
