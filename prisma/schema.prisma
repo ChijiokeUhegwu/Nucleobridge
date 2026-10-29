@@ -1,0 +1,474 @@
+// ==============================================================================
+// NUCLEOBRIDGE PRISMA DATA MODEL
+// Single Source of Truth: nucleobridge-prd.md (Sections 8 & 10) & schema.md
+// ==============================================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_DATABASE_URL")
+  extensions = [vector]
+}
+
+enum Runtime {
+  PYODIDE
+  WEBR
+  BIOWASM
+}
+
+enum StepStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  PASSED
+  SKIPPED
+}
+
+enum AccessMode {
+  FREE
+  PAID
+  SPLIT
+}
+
+enum StepAccess {
+  FREE
+  PAID
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  ABANDONED
+  REFUNDED
+  REVIEW
+}
+
+enum EntitlementKind {
+  PRO
+}
+
+enum EntitlementSource {
+  PAYMENT
+  MANUAL_GRANT
+}
+
+enum EntitlementStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum AiPool {
+  FREE_MODEL
+  PAID_MODEL
+  EMBEDDING
+}
+
+enum MessageRole {
+  LEARNER
+  MENTOR
+}
+
+enum MessageSource {
+  AI
+  REFUSAL
+}
+
+enum EventType {
+  SESSION_START
+  STEP_OPEN
+  HINT_SHOWN
+  MENTOR_REQUEST
+  MENTOR_THUMB
+  STEP_LEAVE
+  RESTORE
+  DEVICE_PROFILE
+  DOWNLOAD
+  SYNC_ERROR
+  SIGNIN_STARTED
+  SIGNIN_COMPLETED
+  PAYWALL_VIEWED
+  CHECKOUT_STARTED
+  BILLING_VERIFY_TAPPED
+  FEEDBACK_CLICKED
+}
+
+enum ChunkSource {
+  STEP_INSTRUCTIONS
+  CHECK_SUMMARY
+  ERROR_PATTERN
+  TOOL_DOC
+}
+
+// ---------- Users and sign-in ----------
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  progress     LearnerStepProgress[]
+  snapshots    WorkspaceSnapshot[]
+  attempts     CheckAttempt[]
+  messages     MentorMessage[]
+  quotas       HintQuota[]
+  events       LearnerEvent[]
+  payments     Payment[]
+  entitlements Entitlement[]
+}
+
+model LoginCode {
+  id         String    @id @default(cuid())
+  email      String
+  codeHash   String    // SHA-256 hash of the 6-digit code, never the plain code
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([email, createdAt])
+}
+
+// ---------- Shared records (authored content, never hard-deleted) ----------
+
+model CaseStudy {
+  id            String     @id @default(cuid())
+  slug          String     @unique
+  title         String
+  summary       String
+  orderIndex    Int
+  accessMode    AccessMode // No default; importer rejects missing mode
+  freeStepCount Int?       // Defined only for SPLIT case studies
+  version       Int        @default(1)
+  published     Boolean    @default(false)
+  archivedAt    DateTime?
+
+  steps Step[]
+}
+
+model Step {
+  id               String     @id @default(cuid())
+  caseStudyId      String
+  slug             String
+  orderIndex       Int
+  title            String
+  access           StepAccess // Derived by importer from accessMode and orderIndex
+  instructionsMd   String     @db.Text
+  estimatedMinutes Int
+  runtime          Runtime
+  tools            String[]
+  checks           Json       // Typed JSON check definitions
+  version          Int        @default(1)
+  archivedAt       DateTime?  // Soft delete; importer never hard-deletes
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  caseStudy     CaseStudy             @relation(fields: [caseStudyId], references: [id], onDelete: Restrict)
+  guard         StepGuard?
+  datasets      StepDataset[]
+  hints         Hint[]
+  errorPatterns ErrorPattern[]
+  chunks        ContentChunk[]
+  progress      LearnerStepProgress[]
+  snapshots     WorkspaceSnapshot[]
+  attempts      CheckAttempt[]
+  messages      MentorMessage[]
+  events        LearnerEvent[]
+
+  @@unique([caseStudyId, slug])
+  @@index([caseStudyId, orderIndex])
+}
+
+// Server-only data. No learner-facing query selects this table.
+model StepGuard {
+  stepId           String   @id
+  solutionPatterns String[] // Regular expressions describing finished solutions
+
+  step Step @relation(fields: [stepId], references: [id], onDelete: Cascade)
+}
+
+model Dataset {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  title       String
+  fileName    String
+  sizeBytes   Int
+  sha256      String
+  storageKey  String  // Object storage key
+  license     String
+  isSynthetic Boolean @default(true)
+
+  steps StepDataset[]
+}
+
+model StepDataset {
+  stepId    String
+  datasetId String
+  mountPath String
+
+  step    Step    @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  dataset Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@id([stepId, datasetId])
+}
+
+model Hint {
+  id     String @id @default(cuid())
+  stepId String
+  rung   Int    // 1 to 3
+  bodyMd String @db.Text
+
+  step Step @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@unique([stepId, rung])
+}
+
+model ErrorPattern {
+  id          String @id @default(cuid())
+  stepId      String
+  key         String
+  description String
+  matchRule   Json   // Rule evaluated on device against check results
+  messageMd   String @db.Text
+
+  step Step @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@unique([stepId, key])
+}
+
+model ToolDoc {
+  id           String @id @default(cuid())
+  tool         String
+  toolVersion  String
+  sectionTitle String
+  bodyMd       String @db.Text // Public documentation, no paid content
+
+  @@unique([tool, toolVersion, sectionTitle])
+}
+
+// ---------- Payments and access ----------
+
+model Plan {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  name         String
+  priceMinor   Int      // Amount in kobo
+  currency     String   @default("NGN")
+  durationDays Int
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  payments Payment[]
+}
+
+model Payment {
+  id                   String        @id @default(cuid())
+  userId               String?       // Set to NULL on user deletion
+  planId               String
+  reference            String        @unique // Server-generated unique reference
+  provider             String        @default("flutterwave")
+  gatewayTransactionId String?       // Flutterwave transaction ID
+  amountMinor          Int           // Kobo from plan record
+  currency             String
+  status               PaymentStatus @default(PENDING)
+  failureReason        String?
+  initializedAt        DateTime      @default(now())
+  paidAt               DateTime?
+  updatedAt            DateTime      @updatedAt
+
+  user         User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  plan         Plan           @relation(fields: [planId], references: [id], onDelete: Restrict)
+  entitlements Entitlement[]
+  events       PaymentEvent[]
+
+  @@unique([provider, gatewayTransactionId])
+  @@index([userId])
+  @@index([status, initializedAt])
+}
+
+// Stores sanitized gateway events. Never stores card or bank details.
+model PaymentEvent {
+  id            String    @id @default(cuid())
+  provider      String    @default("flutterwave")
+  eventKey      String    // Event type + Flutterwave transaction ID
+  type          String
+  reference     String?
+  amountMinor   Int?
+  currency      String?
+  gatewayStatus String?
+  paymentId     String?
+  receivedAt    DateTime  @default(now())
+  processedAt   DateTime?
+
+  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, eventKey])
+}
+
+model Entitlement {
+  id        String            @id @default(cuid())
+  userId    String
+  kind      EntitlementKind   @default(PRO)
+  source    EntitlementSource
+  paymentId String?
+  startsAt  DateTime
+  endsAt    DateTime
+  status    EntitlementStatus @default(ACTIVE)
+  createdAt DateTime          @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@unique([paymentId])
+  @@index([userId, endsAt])
+}
+
+// ---------- Private records (per learner) ----------
+
+model LearnerStepProgress {
+  id                 String     @id @default(cuid())
+  userId             String
+  stepId             String
+  stepVersion        Int
+  status             StepStatus @default(NOT_STARTED)
+  attempts           Int        @default(0)
+  highestHintRung    Int        @default(0)
+  timeSpentSeconds   Int        @default(0)
+  lastFailedCheckKey String?
+  passedAt           DateTime?
+  revision           Int        @default(1)
+  updatedAt          DateTime   @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  step Step @relation(fields: [stepId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, stepId])
+  @@index([userId])
+}
+
+model WorkspaceSnapshot {
+  id            String   @id @default(cuid())
+  userId        String
+  stepId        String
+  editorText    String   @db.Text // Maximum 100 KB enforced by API
+  commandLog    Json              // Maximum 500 entries enforced by API
+  schemaVersion Int      @default(1)
+  revision      Int      @default(1)
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  step Step @relation(fields: [stepId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, stepId])
+}
+
+model CheckAttempt {
+  id             String   @id @default(cuid())
+  userId         String
+  stepId         String
+  stepVersion    Int
+  passed         Boolean
+  failedCheckKey String?
+  resultSummary  Json
+  createdAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  step Step @relation(fields: [stepId], references: [id], onDelete: Restrict)
+
+  @@index([userId, stepId, createdAt])
+  @@index([stepId, failedCheckKey])
+}
+
+model MentorMessage {
+  id            String         @id @default(cuid())
+  userId        String
+  stepId        String
+  stepVersion   Int
+  role          MessageRole
+  source        MessageSource?
+  pool          AiPool?
+  content       String         @db.Text
+  citedChunkIds String[]
+  topSimilarity Float?
+  outOfScope    Boolean        @default(false)
+  model         String?
+  tokensIn      Int?
+  tokensOut     Int?
+  thumb         Int?           // 1 for up, -1 for down
+  createdAt     DateTime       @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  step Step @relation(fields: [stepId], references: [id], onDelete: Restrict)
+
+  @@index([userId, stepId, createdAt])
+  @@index([outOfScope, createdAt])
+}
+
+model HintQuota {
+  userId    String
+  day       DateTime @db.Date // Lagos calendar day
+  aiCount   Int      @default(0) // Shown answers
+  callCount Int      @default(0) // Model calls including retries
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, day])
+}
+
+model DailyUsage {
+  day              DateTime @db.Date
+  pool             AiPool
+  calls            Int      @default(0)
+  tokensIn         Int      @default(0)
+  tokensOut        Int      @default(0)
+  estimatedCostUsd Decimal  @default(0) @db.Decimal(12, 6)
+
+  @@id([day, pool])
+}
+
+model LearnerEvent {
+  id        String    @id @default(cuid())
+  userId    String?
+  anonId    String?   // Random anonymous identifier for pre-sign-in funnel
+  stepId    String?
+  type      EventType
+  payload   Json
+  createdAt DateTime  @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  step Step? @relation(fields: [stepId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([anonId, createdAt])
+  @@index([stepId, type])
+}
+
+// Vector search content chunks with 768-dimensional embeddings
+model ContentChunk {
+  id             String                      @id @default(cuid())
+  sourceType     ChunkSource
+  sourceId       String                      // Step ID or ToolDoc ID
+  stepId         String?                     // Set for step chunks
+  tool           String?                     // Tool name for TOOL_DOC chunks
+  ordinal        Int                         // Position within source
+  text           String                      @db.Text
+  tokenCount     Int
+  contentHash    String
+  stepVersion    Int?
+  embeddingModel String
+  embedding      Unsupported("vector(768)")?
+  embeddedAt     DateTime?
+  createdAt      DateTime                    @default(now())
+  updatedAt      DateTime                    @updatedAt
+
+  step Step? @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceType, sourceId, ordinal])
+  @@index([stepId])
+  @@index([tool])
+}
+
