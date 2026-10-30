@@ -24,11 +24,11 @@ export default function HomePage() {
         </div>
 
         <nav className={styles.navAction}>
-          <a href="#curriculum" className={`text-label-large ${styles.navLink}`}>
-            Case Studies
+          <a href="/login" className={`text-label-large ${styles.navLink}`}>
+            Sign In
           </a>
-          <a href="/login" className={`text-label-large ${styles.signInButton}`}>
-            Sign In with Email
+          <a href="/signup" className={`text-label-large ${styles.signInButton}`}>
+            Create Account
           </a>
         </nav>
       </header>
