@@ -1,0 +1,40 @@
+ Starting...
+ ✓ Ready in 6.4s
+ ○ Compiling / ...
+ ✓ Compiled / in 10s (470 modules)
+ GET / 200 in 11379ms
+ ○ Compiling /signup ...
+ ✓ Compiled /signup in 6.5s (513 modules)
+ GET /signup 200 in 6956ms
+ ○ Compiling /api/auth/signup ...
+ ✓ Compiled /api/auth/signup in 822ms (286 modules)
+prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."firstName", "public"."User"."lastName", "public"."User"."passwordHash", "public"."User"."createdAt" FROM "public"."User" WHERE ("public"."User"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query INSERT INTO "public"."User" ("id","email","firstName","lastName","passwordHash","createdAt") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "public"."User"."id", "public"."User"."email", "public"."User"."firstName", "public"."User"."lastName", "public"."User"."createdAt"
+ POST /api/auth/signup 201 in 4421ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 1380ms (545 modules)
+ ○ Compiling /api/auth/login-password ...
+ ✓ Compiled /api/auth/login-password in 818ms (290 modules)
+prisma:query SELECT 1
+prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."firstName", "public"."User"."lastName", "public"."User"."passwordHash" FROM "public"."User" WHERE ("public"."User"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
+ POST /api/auth/login-password 200 in 2037ms
+ GET /login 200 in 300ms
+ ○ Compiling /api/auth/otp/request ...
+ ✓ Compiled /api/auth/otp/request in 1507ms (344 modules)
+prisma:query SELECT 1
+prisma:query SELECT COUNT(*) FROM (SELECT "public"."LoginCode"."id" FROM "public"."LoginCode" WHERE ("public"."LoginCode"."email" = $1 AND "public"."LoginCode"."createdAt" >= $2) OFFSET $3) AS "sub"
+prisma:query INSERT INTO "public"."LoginCode" ("id","email","codeHash","expiresAt","attempts","createdAt") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "public"."LoginCode"."id", "public"."LoginCode"."email", "public"."LoginCode"."codeHash", "public"."LoginCode"."expiresAt", "public"."LoginCode"."attempts", "public"."LoginCode"."consumedAt", 
+"public"."LoginCode"."createdAt"
+ POST /api/auth/otp/request 200 in 4799ms
+ ○ Compiling /api/auth/otp/verify ...
+ ✓ Compiled /api/auth/otp/verify in 568ms (346 modules)
+prisma:query SELECT 1
+prisma:query SELECT "public"."LoginCode"."id", "public"."LoginCode"."email", "public"."LoginCode"."codeHash", "public"."LoginCode"."expiresAt", "public"."LoginCode"."attempts", "public"."LoginCode"."consumedAt", "public"."Lo DESC LIMIT $2 OFFSET $3                                                                AND "public"."LoginCode"
+prisma:query UPDATE "public"."LoginCode" SET "consumedAt" = $1 WHERE ("public"."LoginCode"."id" = $2 AND 1=1) RETURNING "public"."LoginCode"."id", "public"."LoginCode"."email",e"."id" = $2 AND 1=1) RE "public"."LoginCode"."codeHash", "public"."LoginCode"."expiresAt", "public"."LoginCode"odeHash", "public"."Logi."attempts", "public"."LoginCode"."consumedAt", "public"."LoginCode"."createdAt"        "public"."LoginCode"."cr
+prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."firstName", "public"."User"."lastName", "public"."User"."passwordHash", "public"."User"."cretName", "public"."User".atedAt" FROM "public"."User" WHERE ("public"."User"."email" = $1 AND 1=1) LIMIT $2 OFFSEser" WHERE ("public"."UsT $3
+ POST /api/auth/otp/verify 200 in 695ms
+
+Status Codes Analysis
+The log contains two distinct HTTP status codes:
+1. 200 OK: Found on the page loads (GET /, GET /signup, GET /login) and the authentication checks (POST /api/auth/login-password, POST /api/auth/otp/request, POST /api/auth/otp/verify). This indicates that the server successfully received, understood, and processed the request, but did not create a new permanent resource.
+2. 201 Created: Found specifically on the POST /api/auth/signup request. This 201 code serves as cryptographic proof that the database write succeeded. A 201 status code explicitly confirms that the server has fulfilled the request and successfully created a new resource—in this case, inserting the new user record into the PostgreSQL database.

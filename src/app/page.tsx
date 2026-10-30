@@ -1,3 +1,5 @@
+import { Fragment } from 'react';
+import { CATALOG_PREVIEW } from '@/lib/catalog-preview';
 import styles from './page.module.css';
 
 /**
@@ -24,11 +26,11 @@ export default function HomePage() {
         </div>
 
         <nav className={styles.navAction}>
-          <a href="#curriculum" className={`text-label-large ${styles.navLink}`}>
-            Case Studies
+          <a href="/login" className={`text-label-large ${styles.navLink}`}>
+            Sign In
           </a>
-          <a href="/login" className={`text-label-large ${styles.signInButton}`}>
-            Sign In with Email
+          <a href="/signup" className={`text-label-large ${styles.signInButton}`}>
+            Create Account
           </a>
         </nav>
       </header>
@@ -51,55 +53,33 @@ export default function HomePage() {
 
         {/* Case Study Catalog Preview */}
         <div id="curriculum" className={styles.curriculumGrid}>
-          {/* Track 1: SPLIT Track */}
-          <article className={styles.caseCard}>
-            <div>
-              <div className={styles.cardHeader}>
-                <h2 className={`text-title-medium ${styles.cardTitle}`}>
-                  Viral Genomic Outbreak Surveillance
-                </h2>
-                <span className={`text-label-small ${styles.badgeFree}`}>
-                  SPLIT • Free Steps 1–3
-                </span>
+          {CATALOG_PREVIEW.map((caseStudy) => (
+            <article key={caseStudy.slug} className={styles.caseCard}>
+              <div>
+                <div className={styles.cardHeader}>
+                  <h2 className={`text-title-medium ${styles.cardTitle}`}>{caseStudy.title}</h2>
+                  <span
+                    className={`text-label-small ${
+                      caseStudy.accessTone === 'pro' ? styles.badgePro : styles.badgeFree
+                    }`}
+                  >
+                    {caseStudy.accessLabel}
+                  </span>
+                </div>
+                <p className={`text-body-medium ${styles.cardDescription}`}>
+                  {caseStudy.description}
+                </p>
               </div>
-              <p className={`text-body-medium ${styles.cardDescription}`}>
-                Inspect raw FASTQ reads, align viral sequences using samtools via Biowasm, and detect
-                lineage-defining mutations in Python.
-              </p>
-            </div>
-            <div className={`text-label-small ${styles.cardMeta}`}>
-              <span className={styles.cardMetaItem}>10 Steps</span>
-              <span>•</span>
-              <span className={styles.cardMetaItem}>Pyodide & Biowasm</span>
-              <span>•</span>
-              <span className={styles.cardMetaItem}>~20 min/step</span>
-            </div>
-          </article>
-
-          {/* Track 2: PRO Track */}
-          <article className={styles.caseCard}>
-            <div>
-              <div className={styles.cardHeader}>
-                <h2 className={`text-title-medium ${styles.cardTitle}`}>
-                  Bacterial Genome Assembly & Annotation
-                </h2>
-                <span className={`text-label-small ${styles.badgePro}`}>
-                  PRO Plan
-                </span>
+              <div className={`text-label-small ${styles.cardMeta}`}>
+                {caseStudy.meta.map((item, index) => (
+                  <Fragment key={item}>
+                    {index > 0 && <span>•</span>}
+                    <span className={styles.cardMetaItem}>{item}</span>
+                  </Fragment>
+                ))}
               </div>
-              <p className={`text-body-medium ${styles.cardDescription}`}>
-                Perform quality filtration, evaluate k-mer frequencies, reconstruct de novo contigs,
-                and generate functional antimicrobial resistance profiles.
-              </p>
-            </div>
-            <div className={`text-label-small ${styles.cardMeta}`}>
-              <span className={styles.cardMetaItem}>8 Steps</span>
-              <span>•</span>
-              <span className={styles.cardMetaItem}>WebR & Python</span>
-              <span>•</span>
-              <span className={styles.cardMetaItem}>Advanced</span>
-            </div>
-          </article>
+            </article>
+          ))}
         </div>
 
         {/* Primary Interaction Buttons */}

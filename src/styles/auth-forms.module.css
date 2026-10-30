@@ -1,0 +1,231 @@
+/* ----------------------------------------------------------------------------
+ * NUCLEOBRIDGE AUTHENTICATION FORMS (auth-forms.module.css)
+ * Strict Rule: Colors applied ONLY via semantic tokens from main-tokens.css.
+ * Zero hardcoded hex/rgb values. Zero primitive tokens.
+ * ---------------------------------------------------------------------------- */
+
+.pageContainer {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 16px;
+  background-color: var(--color-background);
+  color: var(--color-on-background);
+}
+
+.brandHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  text-decoration: none;
+}
+
+.brandIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.brandTitle {
+  color: var(--color-on-surface);
+  letter-spacing: -0.5px;
+}
+
+.card {
+  width: 100%;
+  max-width: 440px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 16px;
+  padding: 32px 28px;
+  box-shadow: var(--shadow-medium);
+}
+
+.cardTitle {
+  color: var(--color-on-surface);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.cardSubtitle {
+  color: var(--color-on-surface-variant);
+  text-align: center;
+  margin-bottom: 24px;
+  line-height: 1.4;
+}
+
+/* Tabs for Unified Sign In */
+.tabGroup {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  background-color: var(--color-surface-container);
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.tabButton {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--color-on-surface-variant);
+  font-weight: 500;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.tabButtonActive {
+  background-color: var(--color-surface-container-lowest);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-soft);
+  font-weight: 600;
+}
+
+/* Form Groups */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.rowTwoCol {
+  display: flex;
+  gap: 12px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.label {
+  color: var(--color-on-surface);
+  font-weight: 500;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background-color: var(--color-surface-container-lowest);
+  color: var(--color-on-surface);
+  border: 1px solid var(--color-outline);
+  font-size: 14px;
+  line-height: 20px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-container);
+}
+
+.inputOtp {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 8px;
+  padding: 12px 16px;
+}
+
+/* Action Buttons */
+.submitButton {
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-soft);
+  margin-top: 6px;
+  transition: opacity 0.15s ease, box-shadow 0.15s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  opacity: 0.92;
+  box-shadow: var(--shadow-medium);
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background-color: var(--color-surface-container);
+  color: var(--color-on-surface);
+  border: 1px solid var(--color-outline);
+  font-weight: 500;
+  margin-top: 8px;
+  transition: background-color 0.15s ease;
+}
+
+.secondaryButton:hover:not(:disabled) {
+  background-color: var(--color-surface-container-high);
+}
+
+/* Alerts */
+.errorAlert {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background-color: var(--color-error-container);
+  color: var(--color-on-error-container);
+  border: 1px solid var(--color-error);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.successAlert {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background-color: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+  border: 1px solid var(--color-primary);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* Footer / Links */
+.footerLinks {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.textLink {
+  color: var(--color-primary);
+  font-weight: 500;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.textLink:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+.subtleText {
+  color: var(--color-on-surface-variant);
+}
+
