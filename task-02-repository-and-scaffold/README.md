@@ -263,3 +263,5 @@ At the end of this stage, the repository had:
 Still outside this stage: the guided step page, in-browser WebAssembly execution, the check runner, autosave/resume and sync, the hint ladder and AI mentor, the progress map, the catalog API, Flutterwave payments, and the full task-05 session/compliance hardening.
 
 **Documentation note.** This README and the files under `docs/` and `evidence/` are the task-02 record. The root `README.md` contains the project-wide overview and status table.
+
+**Pull Request URL:** https://github.com/ChijiokeUhegwu/Nucleobridge/pull/1
