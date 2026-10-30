@@ -2,9 +2,19 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'NucleoBridge | In-Browser Bioinformatics Learning Platform',
-  description:
-    'Master real-world bioinformatics skills directly in your browser using WebAssembly-powered tools, instant automated checks, and a Socratic AI mentor that guides without leaking answers.',
+  title: {
+    default: 'Nucleobridge: Hands-on Interactive Bioinformatics Learning Platform',
+    template: '%s | Nucleobridge',
+  },
+  description: 'Nucleobridge: Hands-on Interactive Bioinformatics Learning Platform',
+  openGraph: {
+    title: 'Nucleobridge',
+    description: 'Nucleobridge: Hands-on Interactive Bioinformatics Learning Platform',
+    siteName: 'Nucleobridge',
+  },
+  icons: {
+    icon: [{ url: '/nucleobridge_favicon.svg', type: 'image/svg+xml' }],
+  },
 };
 
 export const viewport: Viewport = {

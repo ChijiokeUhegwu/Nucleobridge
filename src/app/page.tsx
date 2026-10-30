@@ -1,6 +1,25 @@
+import type { Metadata } from 'next';
 import { Fragment } from 'react';
 import { CATALOG_PREVIEW } from '@/lib/catalog-preview';
 import styles from './page.module.css';
+
+export const metadata: Metadata = {
+  description:
+    'Master hands-on bioinformatics in your browser with Nucleobridge case studies, real Python, R, and samtools workflows, and instant automated checks.',
+  keywords: [
+    'Nucleobridge',
+    'bioinformatics',
+    'bioinformatics learning platform',
+    'interactive bioinformatics',
+    'hands-on bioinformatics',
+    'learn bioinformatics online',
+    'bioinformatics case studies',
+    'in-browser bioinformatics',
+    'Python bioinformatics',
+    'R bioinformatics',
+    'samtools',
+  ],
+};
 
 /**
  * NucleoBridge Minimalist Home Screen
