@@ -107,18 +107,35 @@ enum ChunkSource {
 // ---------- Users and sign-in ----------
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  createdAt DateTime @default(now())
+  id           String    @id @default(cuid())
+  email        String    @unique
+  firstName    String?
+  lastName     String?
+  passwordHash String?
+  createdAt    DateTime  @default(now())
 
-  progress     LearnerStepProgress[]
-  snapshots    WorkspaceSnapshot[]
-  attempts     CheckAttempt[]
-  messages     MentorMessage[]
-  quotas       HintQuota[]
-  events       LearnerEvent[]
-  payments     Payment[]
-  entitlements Entitlement[]
+  progress            LearnerStepProgress[]
+  snapshots           WorkspaceSnapshot[]
+  attempts            CheckAttempt[]
+  messages            MentorMessage[]
+  quotas              HintQuota[]
+  events              LearnerEvent[]
+  payments            Payment[]
+  entitlements        Entitlement[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
 }
 
 model LoginCode {
