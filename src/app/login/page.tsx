@@ -53,9 +53,9 @@ export default function LoginPage() {
         throw new Error(data.error || 'Failed to sign in.');
       }
 
-      setSuccess('Signed in successfully! Redirecting...');
+      setSuccess('Signed in successfully! Redirecting to your dashboard...');
       setTimeout(() => {
-        router.push('/');
+        router.replace('/dashboard');
       }, 1000);
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -123,7 +123,7 @@ export default function LoginPage() {
 
       setSuccess('Code verified! Signed in successfully.');
       setTimeout(() => {
-        router.push('/');
+        router.replace('/dashboard');
       }, 1000);
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -321,3 +321,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

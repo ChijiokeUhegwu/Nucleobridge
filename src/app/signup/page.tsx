@@ -57,10 +57,10 @@ export default function SignUpPage() {
         throw new Error(data.error || 'Failed to create account.');
       }
 
-      setSuccess('Account created successfully! Redirecting to sign in...');
+      setSuccess('Account created successfully! Taking you to your dashboard...');
       setTimeout(() => {
-        router.push('/login');
-      }, 1500);
+        router.replace('/dashboard');
+      }, 1200);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -199,3 +199,4 @@ export default function SignUpPage() {
     </div>
   );
 }
+

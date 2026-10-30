@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyPassword } from '@/lib/auth';
+import { SESSION_COOKIE_NAME, sessionCookieOptions } from '@/lib/session';
 
 export async function POST(request: Request) {
   try {
@@ -53,13 +54,7 @@ export async function POST(request: Request) {
       },
     });
 
-    response.cookies.set('nb_session_user_id', user.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60, // 30 days per PRD FR-A.3
-      path: '/',
-    });
+    response.cookies.set(SESSION_COOKIE_NAME, user.id, sessionCookieOptions);
 
     return response;
   } catch (error) {
@@ -70,3 +65,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

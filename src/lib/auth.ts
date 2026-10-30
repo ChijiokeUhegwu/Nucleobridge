@@ -37,3 +37,4 @@ export function hashToken(token: string): string {
 export function generateResetToken(): string {
   return crypto.randomBytes(32).toString('hex');
 }
+

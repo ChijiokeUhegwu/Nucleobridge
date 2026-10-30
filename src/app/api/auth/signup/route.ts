@@ -1,14 +1,19 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth';
+import { sendWelcomeEmail } from '@/lib/mail';
+import { SESSION_COOKIE_NAME, sessionCookieOptions } from '@/lib/session';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { firstName, lastName, email, password, confirmPassword } = body;
 
+    const cleanFirstName = String(firstName ?? '').trim();
+    const cleanLastName = String(lastName ?? '').trim();
+
     // Validation
-    if (!firstName || !lastName || !email || !password || !confirmPassword) {
+    if (!cleanFirstName || !cleanLastName || !email || !password || !confirmPassword) {
       return NextResponse.json(
         { error: 'All fields are required.' },
         { status: 400 }
@@ -63,8 +68,8 @@ export async function POST(request: Request) {
     const user = await prisma.user.create({
       data: {
         email: trimmedEmail,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
+        firstName: cleanFirstName,
+        lastName: cleanLastName,
         passwordHash,
       },
       select: {
@@ -76,13 +81,26 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(
+    const welcomeEmailSent = await sendWelcomeEmail(
+      trimmedEmail,
+      cleanFirstName,
+      cleanLastName
+    );
+    if (!welcomeEmailSent) {
+      console.warn('Account created, but the welcome email could not be sent.');
+    }
+
+    const response = NextResponse.json(
       {
-        message: 'Account created successfully. You can now sign in.',
+        message: 'Account created successfully. Welcome to NucleoBridge.',
         user,
       },
       { status: 201 }
     );
+
+    response.cookies.set(SESSION_COOKIE_NAME, user.id, sessionCookieOptions);
+
+    return response;
   } catch (error) {
     console.error('Sign up error:', error);
     return NextResponse.json(
@@ -91,3 +109,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

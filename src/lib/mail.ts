@@ -27,6 +27,18 @@ function getTransporter() {
 }
 
 /**
+ * Escapes text before it is interpolated into an HTML email body.
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
  * Sends a 6-digit one-time code to the user's email via Gmail SMTP.
  */
 export async function sendOtpEmail(email: string, code: string): Promise<boolean> {
@@ -122,3 +134,69 @@ export async function sendPasswordResetEmail(
     return false;
   }
 }
+
+/**
+ * Sends a welcome email after a learner creates an account.
+ */
+export async function sendWelcomeEmail(
+  email: string,
+  firstName: string,
+  lastName: string
+): Promise<boolean> {
+  const transporter = getTransporter();
+  const from = process.env.EMAIL_FROM || 'NucleoBridge <noreply@nucleobridge.org>';
+  const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const dashboardUrl = `${appUrl}/dashboard`;
+  const fullName = `${firstName} ${lastName}`.trim();
+
+  if (!transporter) {
+    console.warn(
+      `\n=======================================================\n` +
+      `[MOCK EMAIL SERVICE] Gmail SMTP credentials not yet provided in .env.\n` +
+      `To: ${email}\n` +
+      `Subject: Welcome to NucleoBridge\n` +
+      `Hello ${fullName},\n` +
+      `Your account is ready. Open your dashboard: ${dashboardUrl}\n` +
+      `=======================================================\n`
+    );
+    return true;
+  }
+
+  const safeName = escapeHtml(fullName);
+  const safeDashboardUrl = escapeHtml(dashboardUrl);
+
+  try {
+    await transporter.sendMail({
+      from,
+      to: email,
+      subject: 'Welcome to NucleoBridge',
+      text:
+        `Hello ${fullName},\n\n` +
+        `Welcome to NucleoBridge — your account is ready.\n\n` +
+        `Open your dashboard to explore the case study catalogue, run real bioinformatics tools in your browser, and keep your progress in one place.\n\n` +
+        `Open your dashboard: ${dashboardUrl}\n\n` +
+        `If you did not create this account, you can safely ignore this email.\n\n` +
+        `— The NucleoBridge team`,
+      html: `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 540px; margin: 0 auto; padding: 24px; border: 1px solid #d5e7dd; border-radius: 8px; background-color: #f3fbf6; color: #161d1a;">
+          <h2 style="color: #0f6e56; margin-top: 0;">Welcome to NucleoBridge</h2>
+          <p style="font-size: 15px; line-height: 1.5;">Hello ${safeName},</p>
+          <p style="font-size: 15px; line-height: 1.5;">Your account is ready. You can now open your dashboard to explore the case study catalogue, run real bioinformatics tools in your browser, and keep your progress in one place.</p>
+          <div style="margin: 24px 0; text-align: center;">
+            <a href="${safeDashboardUrl}" style="display: inline-block; font-size: 15px; font-weight: 600; text-decoration: none; padding: 12px 24px; background-color: #0f6e56; color: #ffffff; border-radius: 6px;">
+              Open Your Dashboard
+            </a>
+          </div>
+          <p style="font-size: 13px; color: #51625a;">If the button does not work, copy this address into your browser:<br />${safeDashboardUrl}</p>
+          <p style="font-size: 13px; color: #51625a;">If you did not create this account, you can safely ignore this email.</p>
+          <p style="font-size: 13px; color: #51625a; margin-bottom: 0;">— The NucleoBridge team</p>
+        </div>
+      `,
+    });
+    return true;
+  } catch (error) {
+    console.error('Failed to send welcome email via Gmail SMTP:', error);
+    return false;
+  }
+}
+
