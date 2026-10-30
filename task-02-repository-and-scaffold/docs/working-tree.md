@@ -1,0 +1,7 @@
+# docs/working-tree.md
+
+**What breaks when a working tree has only one branch:**
+When a git working tree has only a single branch (usually `main` or `master`), the entire pipeline from development to deployment is flattened into one lane. Every time a developer commits code, updates a schema, or tests an experimental feature, they are editing the same "single source of truth" directly. If something breaks—like an unhandled connection drop or an invalid schema mapping—the bug is immediately in the only line of code the team has. This eliminates the safety of isolated branch validation. Developers cannot isolate, test, or drop a task without risking severe damage to the main application's state.
+
+**Why it matters more after first deployment than before it:**
+Before the first deployment, everything is a sandbox. A broken database, an unreachable server, or incorrect logic can be fixed internally without impacting anyone. However, after your first deployment, the codebase becomes a live service. When `main` is bound to the production environment, any push or merge translates directly to user impact. Code is visible, and the point past which a mistake can no longer be undone quietly is crossed. In a single-branch workflow post-deployment, a broken feature gets pushed instantly to live users, risking severe user friction, downtime, and visual data corruption. Multitasking on multiple features is impossible without shipping unfinished or broken changes, directly jeopardizing production stability.
