@@ -31,12 +31,20 @@ a {
   text-decoration: none;
 }
 
+a[href] {
+  cursor: pointer;
+}
+
 button {
   font-family: inherit;
   border: none;
   background: none;
   cursor: pointer;
   color: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
 }
 
 input,

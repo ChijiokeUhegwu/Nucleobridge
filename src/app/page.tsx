@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { Fragment } from 'react';
 import { CATALOG_PREVIEW } from '@/lib/catalog-preview';
 import styles from './page.module.css';
@@ -32,26 +33,20 @@ export default function HomePage() {
     <div className={styles.viewportContainer}>
       {/* Top Application Bar */}
       <header className={styles.header}>
-        <div className={styles.brandGroup}>
-          <div className={styles.brandIcon} aria-hidden="true">
-            NB
-          </div>
-          <span className={`text-title-large ${styles.brandTitle}`}>
-            NucleoBridge
-          </span>
-          <span className={`text-label-small ${styles.brandPill}`}>
-            Bioinformatics in Browser
-          </span>
-        </div>
+        <Link href="/" className={styles.brandLink} aria-label="Nucleobridge home">
+          <img
+            src="/fullnucleobridge.svg"
+            alt="Nucleobridge"
+            className={styles.brandLogo}
+          />
+        </Link>
 
-        <nav className={styles.navAction}>
-          <a href="/login" className={`text-label-large ${styles.navLink}`}>
-            Sign In
-          </a>
-          <a href="/signup" className={`text-label-large ${styles.signInButton}`}>
-            Create Account
-          </a>
-        </nav>
+        <a
+          href="/signup"
+          className={`text-label-large ${styles.button} ${styles.getStartedButton}`}
+        >
+          Get Started
+        </a>
       </header>
 
       {/* Main Focus Content */}
@@ -60,7 +55,7 @@ export default function HomePage() {
           <div className={`text-label-medium ${styles.heroTag}`}>
             <span>Real Tools • In-Browser Wasm • Instant Feedback</span>
           </div>
-          <h1 className={`text-headline-large ${styles.heroTitle}`}>
+          <h1 className={styles.heroTitle}>
             Master In-Demand Bioinformatics In Your Browser.
           </h1>
           <p className={`text-body-large ${styles.heroSubtitle}`}>
@@ -103,10 +98,16 @@ export default function HomePage() {
 
         {/* Primary Interaction Buttons */}
         <div className={styles.ctaBar}>
-          <a href="/login" className={`text-label-large ${styles.primaryCta}`}>
+          <a
+            href="/login"
+            className={`text-label-large ${styles.button} ${styles.primaryCta}`}
+          >
             Start Free Case Study
           </a>
-          <a href="/catalog" className={`text-label-large ${styles.secondaryCta}`}>
+          <a
+            href="/catalog"
+            className={`text-label-large ${styles.button} ${styles.secondaryCta}`}
+          >
             Browse Catalog
           </a>
         </div>
