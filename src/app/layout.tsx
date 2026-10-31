@@ -3,8 +3,8 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Nucleobridge: Hands-on Interactive Bioinformatics Learning Platform',
-    template: '%s | Nucleobridge',
+    default: 'Nucleobridge | Hands-on Interactive Bioinformatics Learning Platform',
+    template: 'Nucleobridge | %s',
   },
   description: 'Nucleobridge: Hands-on Interactive Bioinformatics Learning Platform',
   openGraph: {
