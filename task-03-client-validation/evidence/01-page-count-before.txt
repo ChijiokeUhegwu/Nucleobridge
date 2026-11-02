@@ -1,0 +1,10 @@
+6 pages:                                           
+                                                        
+     1. / — src/app/page.tsx                            nto the     
+     2. /dashboard — src/app/dashboard/page.tsx         tack        
+     3. /forgot-password — src/app/forgot-password/     , scope     
+        page.tsx                                        le root     
+     4. /login — src/app/login/page.tsx                 9.
+     5. /reset-password — src/app/reset-password/page.  
+        tsx                                             d repo      
+     6. /signup — src/app/signup/page.tsx 

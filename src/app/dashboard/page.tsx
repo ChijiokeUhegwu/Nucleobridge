@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { authHref } from '@/lib/auth-routes';
 import { CATALOG_PREVIEW } from '@/lib/catalog-preview';
 import styles from './dashboard.module.css';
 
@@ -29,7 +30,7 @@ export default function DashboardPage() {
         const response = await fetch('/api/auth/me', { cache: 'no-store' });
 
         if (response.status === 401) {
-          router.replace('/login');
+          router.replace(authHref('login'));
           return;
         }
 
@@ -101,7 +102,7 @@ export default function DashboardPage() {
           <p className={`text-body-medium ${styles.errorText}`}>
             {loadError || 'Your session could not be found.'}
           </p>
-          <Link href="/login" className={styles.errorLink}>
+          <Link href={authHref('login')} className={styles.errorLink}>
             Go to sign in
           </Link>
         </div>

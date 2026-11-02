@@ -1,0 +1,11 @@
+✓ Compiled in 16s (523 modules)
+ ⚠ Found a change in next.config.mjs. Restarting the server to apply the changes...
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 10.7s
+ ○ Compiling /auth ...
+ ✓ Compiled /auth in 5.6s (501 modules)
+ GET /auth?view=forgot-password 200 in 6710ms

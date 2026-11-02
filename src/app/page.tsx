@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Fragment } from 'react';
+import { authHref } from '@/lib/auth-routes';
 import { CATALOG_PREVIEW } from '@/lib/catalog-preview';
 import styles from './page.module.css';
 
@@ -42,7 +43,7 @@ export default function HomePage() {
         </Link>
 
         <a
-          href="/signup"
+          href={authHref('signup')}
           className={`text-label-large ${styles.button} ${styles.getStartedButton}`}
         >
           Get Started
@@ -99,7 +100,7 @@ export default function HomePage() {
         {/* Primary Interaction Buttons */}
         <div className={styles.ctaBar}>
           <a
-            href="/login"
+            href={authHref('login')}
             className={`text-label-large ${styles.button} ${styles.primaryCta}`}
           >
             Start Free Case Study
