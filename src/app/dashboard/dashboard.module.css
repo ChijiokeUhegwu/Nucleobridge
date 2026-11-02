@@ -31,6 +31,16 @@
   align-items: center;
   gap: 12px;
   min-width: 0;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.brandGroup:hover {
+  opacity: 0.85;
+}
+
+.brandGroup:hover .brandTitle {
+  color: var(--color-primary);
 }
 
 .brandIcon {
@@ -50,6 +60,7 @@
 .brandTitle {
   color: var(--color-on-surface);
   letter-spacing: -0.5px;
+  transition: color 0.15s ease;
 }
 
 .brandPill {
@@ -84,6 +95,7 @@
   background-color: var(--color-surface-container-lowest);
   color: var(--color-error);
   border: 1px solid var(--color-outline);
+  cursor: pointer;
   font-weight: 600;
   white-space: nowrap;
   transition: background-color 0.15s ease, border-color 0.15s ease;
@@ -305,7 +317,15 @@
   border-radius: 8px;
   background-color: var(--color-primary);
   color: var(--color-on-primary);
+  cursor: pointer;
   font-weight: 600;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.errorLink:hover {
+  background-color: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+  box-shadow: var(--shadow-medium);
 }
 
 /* Small screens */
