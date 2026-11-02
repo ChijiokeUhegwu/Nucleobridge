@@ -1,0 +1,3 @@
+# number-input-rationale.md
+
+The `type="number"` input is the correct choice when collecting a continuous quantitative value where mathematical adjustments make logical sense, such as the quantity of items in a shopping cart or a user's age. It is entirely inappropriate for identifiers, postal codes, or authentication tokens where the numbers represent a distinct, non-computable sequence and native increment spinners actively hinder the user experience.

@@ -235,7 +235,8 @@ function LoginView() {
   }
 
   function handleOtpCodeChange(event: React.ChangeEvent<HTMLInputElement>) {
-    setOtpCode(event.target.value);
+    const digitsOnly = event.target.value.replace(/\D/g, '');
+    setOtpCode(digitsOnly);
     setError(null);
     setFieldErrors((prev) => ({ ...prev, otpCode: undefined }));
   }
@@ -344,10 +345,12 @@ function LoginView() {
     setLoading(true);
 
     try {
+      const code = Number(otpCode);
+
       const response = await fetch('/api/auth/otp/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code: otpCode }),
+        body: JSON.stringify({ email, code }),
       });
 
       const data = await response.json();
