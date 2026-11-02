@@ -8,6 +8,115 @@ import styles from '@/styles/auth-forms.module.css';
 
 type LoginMode = 'password' | 'otp';
 type OtpStep = 'request' | 'verify';
+type SignupField = 'firstName' | 'lastName' | 'email' | 'password';
+type SignupErrors = Partial<Record<SignupField | 'terms', string>>;
+type LoginField = 'email' | 'password' | 'otpCode';
+type LoginErrors = Partial<Record<LoginField, string>>;
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMPTY_EMAIL_MESSAGE = 'This detail is missing. Please add your email address.';
+const EMPTY_PASSWORD_MESSAGE = 'This detail is missing. Please enter your password.';
+const EMAIL_FORMAT_MESSAGE = 'Enter an email address like name@domain.com.';
+const PASSWORD_MIN_MESSAGE = 'Your password needs at least 8 characters.';
+const OTP_CODE_MESSAGE = 'Enter the 6-digit code from your email.';
+const TERMS_MESSAGE = 'Please accept the Terms and Privacy Policy to continue.';
+
+function isBlank(value: string) {
+  return value.trim().length === 0;
+}
+
+function validateName(value: string, label: string) {
+  if (isBlank(value)) {
+    return `This detail is missing. Please add your ${label.toLowerCase()}.`;
+  }
+  if (value.trim().length < 2) {
+    return `${label} needs at least 2 characters.`;
+  }
+  return undefined;
+}
+
+function validateEmail(value: string) {
+  if (isBlank(value)) {
+    return EMPTY_EMAIL_MESSAGE;
+  }
+  if (!EMAIL_PATTERN.test(value.trim())) {
+    return EMAIL_FORMAT_MESSAGE;
+  }
+  return undefined;
+}
+
+function validatePassword(value: string) {
+  if (isBlank(value)) {
+    return EMPTY_PASSWORD_MESSAGE;
+  }
+  if (value.length < 8) {
+    return PASSWORD_MIN_MESSAGE;
+  }
+  return undefined;
+}
+
+function validateSignupField(field: SignupField, value: string) {
+  switch (field) {
+    case 'firstName':
+      return validateName(value, 'First name');
+    case 'lastName':
+      return validateName(value, 'Last name');
+    case 'email':
+      return validateEmail(value);
+    case 'password':
+      return validatePassword(value);
+  }
+}
+
+function getSignupEmailChangeError(value: string, touched: boolean) {
+  if (isBlank(value)) {
+    return touched ? EMPTY_EMAIL_MESSAGE : undefined;
+  }
+  return EMAIL_PATTERN.test(value.trim()) ? undefined : EMAIL_FORMAT_MESSAGE;
+}
+
+function CautionIcon({ className = styles.fieldErrorIcon }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  );
+}
+
+function InlineError({ id, message }: { id: string; message?: string }) {
+  if (!message) {
+    return null;
+  }
+
+  return (
+    <p id={id} className={`text-body-small ${styles.fieldError}`} role="alert">
+      <CautionIcon />
+      <span>{message}</span>
+    </p>
+  );
+}
+
+function ErrorAlert({ message }: { message: string }) {
+  return (
+    <div className={styles.errorAlert} role="alert">
+      <CautionIcon className={styles.alertErrorIcon} />
+      <span>{message}</span>
+    </div>
+  );
+}
 
 function AuthShell({ children }: { children: React.ReactNode }) {
   return (
@@ -75,6 +184,8 @@ function LoginView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<LoginErrors>({});
+  const [touched, setTouched] = useState<Partial<Record<LoginField, boolean>>>({});
 
   function handleModeChange(mode: LoginMode) {
     setAuthMode(mode);
@@ -82,12 +193,77 @@ function LoginView() {
     setSuccess(null);
     setOtpStep('request');
     setOtpCode('');
+    setFieldErrors({});
+    setTouched({});
+  }
+
+  function handleLoginEmailChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setEmail(event.target.value);
+    setError(null);
+    setFieldErrors((prev) => ({ ...prev, email: undefined }));
+  }
+
+  function handleLoginEmailBlur(event: React.FocusEvent<HTMLInputElement>) {
+    setTouched((prev) => ({ ...prev, email: true }));
+    setFieldErrors((prev) => {
+      if (isBlank(event.target.value)) {
+        return { ...prev, email: EMPTY_EMAIL_MESSAGE };
+      }
+      if (prev.email === EMPTY_EMAIL_MESSAGE) {
+        return { ...prev, email: undefined };
+      }
+      return prev;
+    });
+  }
+
+  function handleLoginPasswordChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const value = event.target.value;
+    setPassword(value);
+    setError(null);
+    setFieldErrors((prev) => ({
+      ...prev,
+      password: touched.password ? validatePassword(value) : undefined,
+    }));
+  }
+
+  function handleLoginPasswordBlur(event: React.FocusEvent<HTMLInputElement>) {
+    setTouched((prev) => ({ ...prev, password: true }));
+    setFieldErrors((prev) => ({
+      ...prev,
+      password: validatePassword(event.target.value),
+    }));
+  }
+
+  function handleOtpCodeChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setOtpCode(event.target.value);
+    setError(null);
+    setFieldErrors((prev) => ({ ...prev, otpCode: undefined }));
+  }
+
+  function handleOtpCodeBlur(event: React.FocusEvent<HTMLInputElement>) {
+    setTouched((prev) => ({ ...prev, otpCode: true }));
+    setFieldErrors((prev) => ({
+      ...prev,
+      otpCode: isBlank(event.target.value) ? OTP_CODE_MESSAGE : undefined,
+    }));
   }
 
   async function handlePasswordLogin(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
     setSuccess(null);
+
+    const nextErrors: LoginErrors = {
+      email: validateEmail(email),
+      password: validatePassword(password),
+    };
+    setFieldErrors(nextErrors);
+    setTouched({ email: true, password: true });
+
+    if (nextErrors.email || nextErrors.password) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -118,6 +294,15 @@ function LoginView() {
     event.preventDefault();
     setError(null);
     setSuccess(null);
+
+    const emailError = validateEmail(email);
+    setFieldErrors((prev) => ({ ...prev, email: emailError }));
+    setTouched((prev) => ({ ...prev, email: true }));
+
+    if (emailError) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -134,6 +319,7 @@ function LoginView() {
       }
 
       setSuccess(data.message || 'Verification code sent to your email.');
+      setFieldErrors({});
       setOtpStep('verify');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
@@ -146,6 +332,15 @@ function LoginView() {
     event.preventDefault();
     setError(null);
     setSuccess(null);
+
+    const codeError = otpCode.length !== 6 ? OTP_CODE_MESSAGE : undefined;
+    setFieldErrors((prev) => ({ ...prev, otpCode: codeError }));
+    setTouched((prev) => ({ ...prev, otpCode: true }));
+
+    if (codeError) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -200,11 +395,11 @@ function LoginView() {
         </button>
       </div>
 
-      {error && <div className={styles.errorAlert}>{error}</div>}
+      {error && <ErrorAlert message={error} />}
       {success && <div className={styles.successAlert}>{success}</div>}
 
       {authMode === 'password' && (
-        <form onSubmit={handlePasswordLogin} className={styles.form}>
+        <form onSubmit={handlePasswordLogin} className={styles.form} noValidate>
           <div className={styles.fieldGroup}>
             <label htmlFor="loginEmail" className={`text-label-medium ${styles.label}`}>
               Email Address
@@ -215,10 +410,14 @@ function LoginView() {
               required
               autoComplete="email"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={handleLoginEmailChange}
+              onBlur={handleLoginEmailBlur}
+              aria-invalid={Boolean(fieldErrors.email)}
+              aria-describedby={fieldErrors.email ? 'login-email-error' : undefined}
               placeholder="learner@example.com"
-              className={styles.input}
+              className={`${styles.input} ${fieldErrors.email ? styles.inputError : ''}`}
             />
+            <InlineError id="login-email-error" message={fieldErrors.email} />
           </div>
 
           <div className={styles.fieldGroup}>
@@ -236,10 +435,14 @@ function LoginView() {
               required
               autoComplete="current-password"
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={handleLoginPasswordChange}
+              onBlur={handleLoginPasswordBlur}
+              aria-invalid={Boolean(fieldErrors.password)}
+              aria-describedby={fieldErrors.password ? 'login-password-error' : undefined}
               placeholder="Your password"
-              className={styles.input}
+              className={`${styles.input} ${fieldErrors.password ? styles.inputError : ''}`}
             />
+            <InlineError id="login-password-error" message={fieldErrors.password} />
           </div>
 
           <button
@@ -255,7 +458,7 @@ function LoginView() {
       {authMode === 'otp' && (
         <div>
           {otpStep === 'request' ? (
-            <form onSubmit={handleOtpRequest} className={styles.form}>
+            <form onSubmit={handleOtpRequest} className={styles.form} noValidate>
               <div className={styles.fieldGroup}>
                 <label htmlFor="otpEmail" className={`text-label-medium ${styles.label}`}>
                   Email Address
@@ -266,10 +469,14 @@ function LoginView() {
                   required
                   autoComplete="email"
                   value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  onChange={handleLoginEmailChange}
+                  onBlur={handleLoginEmailBlur}
+                  aria-invalid={Boolean(fieldErrors.email)}
+                  aria-describedby={fieldErrors.email ? 'otp-email-error' : undefined}
                   placeholder="learner@example.com"
-                  className={styles.input}
+                  className={`${styles.input} ${fieldErrors.email ? styles.inputError : ''}`}
                 />
+                <InlineError id="otp-email-error" message={fieldErrors.email} />
               </div>
 
               <p className={`text-body-small ${styles.subtleText}`}>
@@ -285,7 +492,7 @@ function LoginView() {
               </button>
             </form>
           ) : (
-            <form onSubmit={handleOtpVerify} className={styles.form}>
+            <form onSubmit={handleOtpVerify} className={styles.form} noValidate>
               <div className={styles.fieldGroup}>
                 <label htmlFor="otpCode" className={`text-label-medium ${styles.label}`}>
                   Enter 6-Digit Code
@@ -299,10 +506,16 @@ function LoginView() {
                   required
                   autoComplete="one-time-code"
                   value={otpCode}
-                  onChange={(event) => setOtpCode(event.target.value)}
+                  onChange={handleOtpCodeChange}
+                  onBlur={handleOtpCodeBlur}
+                  aria-invalid={Boolean(fieldErrors.otpCode)}
+                  aria-describedby={fieldErrors.otpCode ? 'otp-code-error' : undefined}
                   placeholder="123456"
-                  className={`${styles.input} ${styles.inputOtp}`}
+                  className={`${styles.input} ${styles.inputOtp} ${
+                    fieldErrors.otpCode ? styles.inputError : ''
+                  }`}
                 />
+                <InlineError id="otp-code-error" message={fieldErrors.otpCode} />
               </div>
 
               <p className={`text-body-small ${styles.subtleText}`}>
@@ -324,6 +537,7 @@ function LoginView() {
                   setOtpStep('request');
                   setOtpCode('');
                   setError(null);
+                  setFieldErrors((prev) => ({ ...prev, otpCode: undefined }));
                 }}
                 className={`text-label-medium ${styles.secondaryButton}`}
               >
@@ -359,21 +573,59 @@ function SignUpView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<SignupErrors>({});
+  const [touched, setTouched] = useState<Partial<Record<SignupField, boolean>>>({});
 
-  const emailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim());
   const formIsComplete =
-    formData.firstName.trim().length > 0 &&
-    formData.lastName.trim().length > 0 &&
-    emailIsValid &&
+    formData.firstName.trim().length >= 2 &&
+    formData.lastName.trim().length >= 2 &&
+    EMAIL_PATTERN.test(formData.email.trim()) &&
     formData.password.length >= 8 &&
     acceptedTerms;
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const { name, value } = event.target;
     setFormData((prev) => ({
       ...prev,
-      [event.target.name]: event.target.value,
+      [name]: value,
     }));
     setError(null);
+
+    if (name === 'email') {
+      setFieldErrors((prev) => ({
+        ...prev,
+        email: getSignupEmailChangeError(value, Boolean(touched.email)),
+      }));
+      return;
+    }
+
+    const field = name as SignupField;
+    setFieldErrors((prev) => ({
+      ...prev,
+      [field]: touched[field] ? validateSignupField(field, value) : undefined,
+    }));
+  }
+
+  function handleBlur(event: React.FocusEvent<HTMLInputElement>) {
+    const field = event.target.name as SignupField;
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    setFieldErrors((prev) => ({
+      ...prev,
+      [field]: validateSignupField(field, event.target.value),
+    }));
+  }
+
+  function handleTermsChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const checked = event.target.checked;
+    setAcceptedTerms(checked);
+    setError(null);
+    setFieldErrors((prev) => ({ ...prev, terms: checked ? undefined : prev.terms }));
+  }
+
+  function handleTermsBlur(event: React.FocusEvent<HTMLInputElement>) {
+    if (!event.target.checked) {
+      setFieldErrors((prev) => ({ ...prev, terms: TERMS_MESSAGE }));
+    }
   }
 
   async function handleSubmit(event: React.FormEvent) {
@@ -381,13 +633,17 @@ function SignUpView() {
     setError(null);
     setSuccess(null);
 
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long.');
-      return;
-    }
+    const nextErrors: SignupErrors = {
+      firstName: validateName(formData.firstName, 'First name'),
+      lastName: validateName(formData.lastName, 'Last name'),
+      email: validateEmail(formData.email),
+      password: validatePassword(formData.password),
+      terms: acceptedTerms ? undefined : TERMS_MESSAGE,
+    };
+    setFieldErrors(nextErrors);
+    setTouched({ firstName: true, lastName: true, email: true, password: true });
 
-    if (!acceptedTerms) {
-      setError('You must accept the Terms and Conditions and Privacy Policy to create an account.');
+    if (Object.values(nextErrors).some(Boolean)) {
       return;
     }
 
@@ -429,7 +685,7 @@ function SignUpView() {
       {error && <div className={styles.errorAlert}>{error}</div>}
       {success && <div className={styles.successAlert}>{success}</div>}
 
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <form onSubmit={handleSubmit} className={styles.form} noValidate>
         <div className={styles.rowTwoCol}>
           <div className={styles.fieldGroup}>
             <label htmlFor="firstName" className={`text-label-medium ${styles.label}`}>
@@ -443,9 +699,15 @@ function SignUpView() {
               autoComplete="given-name"
               value={formData.firstName}
               onChange={handleChange}
+              onBlur={handleBlur}
+              aria-invalid={Boolean(fieldErrors.firstName)}
+              aria-describedby={
+                fieldErrors.firstName ? 'signup-first-name-error' : undefined
+              }
               placeholder="First name"
-              className={styles.input}
+              className={`${styles.input} ${fieldErrors.firstName ? styles.inputError : ''}`}
             />
+            <InlineError id="signup-first-name-error" message={fieldErrors.firstName} />
           </div>
 
           <div className={styles.fieldGroup}>
@@ -460,9 +722,15 @@ function SignUpView() {
               autoComplete="family-name"
               value={formData.lastName}
               onChange={handleChange}
+              onBlur={handleBlur}
+              aria-invalid={Boolean(fieldErrors.lastName)}
+              aria-describedby={
+                fieldErrors.lastName ? 'signup-last-name-error' : undefined
+              }
               placeholder="Last name"
-              className={styles.input}
+              className={`${styles.input} ${fieldErrors.lastName ? styles.inputError : ''}`}
             />
+            <InlineError id="signup-last-name-error" message={fieldErrors.lastName} />
           </div>
         </div>
 
@@ -478,9 +746,13 @@ function SignUpView() {
             autoComplete="email"
             value={formData.email}
             onChange={handleChange}
+            onBlur={handleBlur}
+            aria-invalid={Boolean(fieldErrors.email)}
+            aria-describedby={fieldErrors.email ? 'signup-email-error' : undefined}
             placeholder="learner@example.com"
-            className={styles.input}
+            className={`${styles.input} ${fieldErrors.email ? styles.inputError : ''}`}
           />
+          <InlineError id="signup-email-error" message={fieldErrors.email} />
         </div>
 
         <div className={styles.fieldGroup}>
@@ -497,8 +769,15 @@ function SignUpView() {
               autoComplete="new-password"
               value={formData.password}
               onChange={handleChange}
+              onBlur={handleBlur}
+              aria-invalid={Boolean(fieldErrors.password)}
+              aria-describedby={
+                fieldErrors.password ? 'signup-password-error' : undefined
+              }
               placeholder="Minimum 8 characters"
-              className={`${styles.input} ${styles.passwordInput}`}
+              className={`${styles.input} ${styles.passwordInput} ${
+                fieldErrors.password ? styles.inputError : ''
+              }`}
             />
             <button
               type="button"
@@ -510,31 +789,35 @@ function SignUpView() {
               <EyeIcon hidden={showPassword} />
             </button>
           </div>
+          <InlineError id="signup-password-error" message={fieldErrors.password} />
         </div>
 
-        <div className={styles.termsRow}>
-          <input
-            id="acceptTerms"
-            name="acceptTerms"
-            type="checkbox"
-            required
-            checked={acceptedTerms}
-            onChange={(event) => {
-              setAcceptedTerms(event.target.checked);
-              setError(null);
-            }}
-            className={styles.checkbox}
-          />
-          <label htmlFor="acceptTerms" className={`text-body-small ${styles.termsLabel}`}>
-            I accept the{' '}
-            <Link href="/terms" className={styles.textLink}>
-              Terms and Conditions
-            </Link>{' '}
-            and{' '}
-            <Link href="/privacy" className={styles.textLink}>
-              Privacy Policy
-            </Link>
-          </label>
+        <div className={styles.fieldGroup}>
+          <div className={styles.termsRow}>
+            <input
+              id="acceptTerms"
+              name="acceptTerms"
+              type="checkbox"
+              required
+              checked={acceptedTerms}
+              onChange={handleTermsChange}
+              onBlur={handleTermsBlur}
+              aria-invalid={Boolean(fieldErrors.terms)}
+              aria-describedby={fieldErrors.terms ? 'signup-terms-error' : undefined}
+              className={`${styles.checkbox} ${fieldErrors.terms ? styles.checkboxError : ''}`}
+            />
+            <label htmlFor="acceptTerms" className={`text-body-small ${styles.termsLabel}`}>
+              I accept the{' '}
+              <Link href="/terms" className={styles.textLink}>
+                Terms and Conditions
+              </Link>{' '}
+              and{' '}
+              <Link href="/privacy" className={styles.textLink}>
+                Privacy Policy
+              </Link>
+            </label>
+          </div>
+          <InlineError id="signup-terms-error" message={fieldErrors.terms} />
         </div>
 
         <button
