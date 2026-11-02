@@ -10,7 +10,7 @@ export async function POST(request: Request) {
 
     if (!email || !code) {
       return NextResponse.json(
-        { error: 'Email and 6-digit code are required.' },
+        { error: 'Email and security code are required.' },
         { status: 400 }
       );
     }

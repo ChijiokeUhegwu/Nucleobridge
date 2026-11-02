@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      message: 'A 6-digit code has been sent to your email. Enter it below.',
+      message: 'A security code has been sent to your email. Enter it below.',
       email: trimmedEmail,
     });
   } catch (error) {

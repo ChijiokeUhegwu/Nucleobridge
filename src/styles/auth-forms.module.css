@@ -266,6 +266,12 @@
   cursor: not-allowed;
 }
 
+.submitButton[aria-disabled='true'] {
+  opacity: 0.6;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
 .secondaryButton {
   width: 100%;
   padding: 10px 16px;

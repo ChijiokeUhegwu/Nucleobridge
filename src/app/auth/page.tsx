@@ -18,7 +18,7 @@ const EMPTY_EMAIL_MESSAGE = 'This detail is missing. Please add your email addre
 const EMPTY_PASSWORD_MESSAGE = 'This detail is missing. Please enter your password.';
 const EMAIL_FORMAT_MESSAGE = 'Enter an email address like name@domain.com.';
 const PASSWORD_MIN_MESSAGE = 'Your password needs at least 8 characters.';
-const OTP_CODE_MESSAGE = 'Enter the 6-digit code from your email.';
+const OTP_CODE_MESSAGE = 'Enter the security code from your email.';
 const TERMS_MESSAGE = 'Please accept the Terms and Privacy Policy to continue.';
 
 function isBlank(value: string) {
@@ -331,6 +331,9 @@ function LoginView() {
 
   async function handleOtpVerify(event: React.FormEvent) {
     event.preventDefault();
+    if (loading) {
+      return;
+    }
     setError(null);
     setSuccess(null);
 
@@ -394,7 +397,7 @@ function LoginView() {
           onClick={() => handleModeChange('otp')}
           className={`${styles.tabButton} ${authMode === 'otp' ? styles.tabButtonActive : ''}`}
         >
-          6-Digit Email Code
+          Email Code
         </button>
       </div>
 
@@ -483,7 +486,7 @@ function LoginView() {
               </div>
 
               <p className={`text-body-small ${styles.subtleText}`}>
-                We will dispatch a 6-digit code via Gmail SMTP to your inbox. No password needed.
+                A security code will be sent to your email. No password needed.
               </p>
 
               <button
@@ -491,14 +494,14 @@ function LoginView() {
                 disabled={loading}
                 className={`text-label-large ${styles.submitButton}`}
               >
-                {loading ? 'Dispatching Code...' : 'Send 6-Digit Code'}
+                {loading ? 'Dispatching Code...' : 'Send Code'}
               </button>
             </form>
           ) : (
             <form onSubmit={handleOtpVerify} className={styles.form} noValidate>
               <div className={styles.fieldGroup}>
                 <label htmlFor="otpCode" className={`text-label-medium ${styles.label}`}>
-                  Enter 6-Digit Code
+                  Enter Code
                 </label>
                 <input
                   id="otpCode"
@@ -513,7 +516,6 @@ function LoginView() {
                   onBlur={handleOtpCodeBlur}
                   aria-invalid={Boolean(fieldErrors.otpCode)}
                   aria-describedby={fieldErrors.otpCode ? 'otp-code-error' : undefined}
-                  placeholder="123456"
                   className={`${styles.input} ${styles.inputOtp} ${
                     fieldErrors.otpCode ? styles.inputError : ''
                   }`}
@@ -522,12 +524,12 @@ function LoginView() {
               </div>
 
               <p className={`text-body-small ${styles.subtleText}`}>
-                Code sent to <strong>{email}</strong>. It expires in 10 minutes.
+                A security code has been sent to your email. Enter it below.
               </p>
 
               <button
                 type="submit"
-                disabled={loading || otpCode.length !== 6}
+                aria-disabled={loading || otpCode.length !== 6}
                 className={`text-label-large ${styles.submitButton}`}
               >
                 {loading ? 'Verifying Code...' : 'Verify & Sign In'}
@@ -585,6 +587,7 @@ function SignUpView() {
     EMAIL_PATTERN.test(formData.email.trim()) &&
     formData.password.length >= 8 &&
     acceptedTerms;
+  const submitIsDisabled = loading || !formIsComplete;
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
@@ -633,6 +636,9 @@ function SignUpView() {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (loading) {
+      return;
+    }
     setError(null);
     setSuccess(null);
 
@@ -774,10 +780,10 @@ function SignUpView() {
               onChange={handleChange}
               onBlur={handleBlur}
               aria-invalid={Boolean(fieldErrors.password)}
-              aria-describedby={
-                fieldErrors.password ? 'signup-password-error' : undefined
-              }
-              placeholder="Minimum 8 characters"
+              aria-describedby={`signup-password-requirement${
+                fieldErrors.password ? ' signup-password-error' : ''
+              }`}
+              placeholder="Your password"
               className={`${styles.input} ${styles.passwordInput} ${
                 fieldErrors.password ? styles.inputError : ''
               }`}
@@ -792,6 +798,12 @@ function SignUpView() {
               <EyeIcon hidden={showPassword} />
             </button>
           </div>
+          <p
+            id="signup-password-requirement"
+            className={`text-body-small ${styles.subtleText}`}
+          >
+            Minimum 8 characters
+          </p>
           <InlineError id="signup-password-error" message={fieldErrors.password} />
         </div>
 
@@ -802,6 +814,7 @@ function SignUpView() {
               name="acceptTerms"
               type="checkbox"
               required
+              aria-required="true"
               checked={acceptedTerms}
               onChange={handleTermsChange}
               onBlur={handleTermsBlur}
@@ -825,7 +838,7 @@ function SignUpView() {
 
         <button
           type="submit"
-          disabled={loading || !formIsComplete}
+          aria-disabled={submitIsDisabled}
           className={`text-label-large ${styles.submitButton}`}
         >
           {loading ? 'Creating Account...' : 'Sign Up'}
