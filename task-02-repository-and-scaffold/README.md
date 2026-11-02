@@ -1,267 +1,158 @@
-# Task 02: Repository Scaffold & Database Setup
+# Task 02: Repository and Scaffold
 
-*Foundational Next.js App Router, TypeScript, Prisma/PostgreSQL, semantic design-token integration, and the first verified database writes for NucleoBridge.*
+## 1. What This Is
 
----
+NucleoBridge is a freemium, browser-based bioinformatics learning platform for self-directed learners on low-resource hardware, and the one thing that must work is that paid lesson content reaches only learners with an active PRO entitlement.
 
-## 1. What This Task Was
+## 2. Status
 
-NucleoBridge is an in-browser bioinformatics learning platform for learners on low-resource hardware (4 GB RAM laptops, mobile devices, metered connections, and unstable power). Before the lesson runtime, automated checks, AI mentor, payments, or progress map could be built, the project needed a foundation that could actually start, connect to PostgreSQL, and render a visitor-facing screen using the completed design system from `task-01-design-system`.
+This task delivered a runnable foundation and a development-only authentication slice, not a working learning platform. The paid-content invariant above is not implemented yet because the paid content, access guard, and payment path belong to later tasks.
 
-This stage delivered that foundation:
-
-1. A repository and Next.js App Router project that runs locally with TypeScript.
-2. A Prisma data model that matches the PRD, including PostgreSQL/pgvector.
-3. Semantic design-token integration with no primitive colour leakage.
-4. A minimalistic, exactly `100vh` home screen for visitors.
-5. A real database-write verification path through an authentication slice.
-6. A documented record of defects, decisions, and evidence.
-
-**Scope boundary.** This task did not build the five learning features (guided step page, check runner, autosave/sync, hint ladder with AI mentor, or progress map), payments, the content importer, or the WebAssembly runtime. The authentication slice described in section 2.6 was added to prove that Prisma reads and writes reach PostgreSQL and to exercise the signup, login, and password-reset paths. Full session hardening, compliance, and production defences belong to later tasks.
-
----
-
-## 2. Operations Carried Out
-
-### 2.1 Context review and approval gate
-
-- Read `AGENTS.md`, `nucleobridge-prd.md`, the files in `.agents/rules/`, and the task-01 design system (`main-tokens.css`).
-- Summarised the product requirements, architecture, access rules, and design constraints before writing code.
-- Raised the points where the scaffold prompt and the source files differed: the PostgreSQL version, Node.js versus the Next.js App Router, the scope of the visitor home screen, and the file-location table in `structure.md`.
-- Stopped and waited for explicit owner approval instead of assuming the answers.
-
-Evidence: [`evidence/01-agent-plan.txt`](evidence/01-agent-plan.txt), [`docs/scaffold-prompt.md`](docs/scaffold-prompt.md), [`docs/model-choices.md`](docs/model-choices.md).
-
-### 2.2 Repository and application scaffold
-
-- Created the root toolchain files: `package.json`, `tsconfig.json`, `next.config.mjs`, `next-env.d.ts`, and `.env.example`.
-- Created the App Router source structure under `src/app/`, shared server helpers under `src/lib/`, and the design-token copy under `src/styles/`.
-- Created `src/lib/prisma.ts` as a global singleton so development hot reloads do not exhaust database connections.
-- Kept secrets server-only. `.env.example` names the required variables without containing real values; `.env` remains ignored by Git.
-
-Evidence: [`evidence/02-files-created.txt`](evidence/02-files-created.txt), [`evidence/02-scaffold-summary.txt`](evidence/02-scaffold-summary.txt).
-
-### 2.3 Database and schema setup
-
-- Wrote `prisma/schema.prisma` from the approved data model in PRD sections 8 and 10: the 22 original models, their enums, relations, indexes, and delete/restrict rules.
-- Enabled PostgreSQL with pgvector; `ContentChunk` carries the `Unsupported("vector(768)")` embedding column. Vector reads and writes are reserved for raw SQL, as `schema.md` requires.
-- Added the `init_auth` migration under `prisma/migrations/20261030105045_init_auth/`.
-- Used the pooled runtime connection (`DATABASE_URL`) and the direct migration connection (`DIRECT_DATABASE_URL`). The database provider was not locked in; the URLs stay compatible with managed PostgreSQL providers.
-- Applied the owner-approved auth amendment to the model: `firstName`, `lastName`, and `passwordHash` on `User`, plus the `PasswordResetToken` model. The schema therefore contains 23 models after the amendment (22 from the PRD plus `PasswordResetToken`).
-
-Evidence: [`../prisma/schema.prisma`](../prisma/schema.prisma), [`../prisma/migrations`](../prisma/migrations), [`evidence/11-write-succeeded-logs.txt`](evidence/11-write-succeeded-logs.txt), [`evidence/12-database-rows.png`](evidence/12-database-rows.png).
-
-### 2.4 Design-system integration
-
-- Copied the compiled semantic tokens from task-01 into `src/styles/main-tokens.css`.
-- Imported the token stylesheet through `src/app/globals.css` and applied a zero-hex universal reset.
-- Built `src/app/layout.tsx` with the DM Sans font, viewport settings, and metadata.
-- Enforced the architectural boundary from task-01: page styles consume semantic tokens only. No `--palette-*` variables and no hardcoded `#hex`, `rgb()`, or `hsl()` values were introduced into application styling.
-
-Evidence: [`evidence/02-scaffold-summary.txt`](evidence/02-scaffold-summary.txt).
-
-### 2.5 Visitor home screen
-
-- Built `src/app/page.tsx` and `src/app/page.module.css` as a zero-scroll, exactly `100vh` screen with a brand header, hero copy, case-study preview cards with access labels, and a status footer.
-- The screen shows case-study titles, summaries, and access labels only. It does not expose lesson content, checks, hints, or paid material, matching the signed-out visitor rule in `access-and-routes.md`.
-- Verified the root route returns `200` after fixing the missing page (see section 2.7).
-
-Evidence: [`evidence/04-first-load.txt`](evidence/04-first-load.txt), [`evidence/10-404-resolved.txt`](evidence/10-404-resolved.txt).
-
-### 2.6 Database write verification through the authentication slice
-
-To prove the database connection and Prisma wiring were real, the stage continued with a thin authentication slice:
-
-- `POST /api/auth/signup` creates a user, hashes the password, and returns `201 Created`.
-- `POST /api/auth/login-password` verifies a password and starts a session.
-- `POST /api/auth/otp/request` and `POST /api/auth/otp/verify` implement the six-digit email-code path.
-- `POST /api/auth/forgot-password` and `POST /api/auth/reset-password` implement the reset-token flow.
-- Added the matching pages (`/signup`, `/login`, `/forgot-password`, `/reset-password`) and shared authentication helpers in `src/lib/auth.ts` and `src/lib/mail.ts`.
-- Passwords use bcrypt hashes. OTP codes and reset tokens are stored as SHA-256 hashes, never as plain text. Email delivery uses a Nodemailer SMTP transport configured from environment variables, with a mock fallback when credentials are absent.
-
-The verification used the database itself, not just the UI:
-
-- The signup request returned `201` and the Prisma log showed an `INSERT INTO "User"` statement.
-- A successful login and the OTP request/verify routes returned `200`.
-- Prisma Studio showed the persisted user rows.
-- A broken `DATABASE_URL` produced a `500` and no write. That failure is documented in [`docs/false-success.md`](docs/false-success.md) as a warning against optimistic UI that reports success without checking the server response.
-
-Evidence: [`evidence/11-write-succeeded-logs.txt`](evidence/11-write-succeeded-logs.txt), [`evidence/12-database-rows.png`](evidence/12-database-rows.png), [`docs/false-success.md`](docs/false-success.md).
-
-### 2.7 Troubleshooting and environment fixes
-
-- **Nested-folder start failure.** Running `npm run dev` from the repository root failed with `ENOENT` because `package.json` was inside a nested `nested-app` folder. The server was started from the folder that contained the manifest, and the final scaffold lives at the repository root.
-- **Port 3000 collision.** Next.js found port 3000 occupied and offered port 3001. The listening process was identified with `netstat -ano`, stopped, and the port situation was rechecked before trusting the running URL.
-- **404 on the root route.** The root route returned `404` because `src/app/page.tsx` was missing. The page was added, recompiled, and verified as `200`.
-- **Broken database connection.** A changed `DATABASE_URL` caused Prisma to throw an initialisation error. The UI showed an error and no data was written. The environment was corrected and the flow was re-run, producing the `201` and insert evidence above.
-
-Evidence: [`evidence/05-nested-folder-error.txt`](evidence/05-nested-folder-error.txt), [`evidence/06-nested-folder-fixed.txt`](evidence/06-nested-folder-fixed.txt), [`evidence/07-port-conflict.txt`](evidence/07-port-conflict.txt), [`evidence/08-port-conflict-resolved.txt`](evidence/08-port-conflict-resolved.txt), [`evidence/09-404-error.txt`](evidence/09-404-error.txt), [`evidence/10-404-resolved.txt`](evidence/10-404-resolved.txt), [`docs/false-success.md`](docs/false-success.md).
-
-### 2.8 Documentation and evidence capture
-
-- Recorded the scaffold prompt and the reasoning behind its revision in [`docs/scaffold-prompt.md`](docs/scaffold-prompt.md).
-- Recorded the agent split (Antigravity for the scaffold, Open Code for the authentication slice) in [`docs/model-choices.md`](docs/model-choices.md).
-- Recorded the development-mode performance gap in [`docs/performance-note.md`](docs/performance-note.md).
-- Recorded the false-success risk in [`docs/false-success.md`](docs/false-success.md).
-- Recorded the single-branch working-tree risk in [`docs/working-tree.md`](docs/working-tree.md).
-- Captured terminal logs, a Prisma Studio screenshot, a hand-drawn working-tree diagram, and a walkthrough video in [`evidence/`](evidence/).
-
----
-
-## 3. What Was Built (Deliverables)
-
-### 3.1 Application scaffold
-
-| Deliverable | Path | Purpose |
+| State | Area | What is true now |
 |---|---|---|
-| Project manifest | [`package.json`](../package.json) | Next.js 14, React 18, TypeScript, Prisma, bcrypt, and Nodemailer dependencies and scripts. |
-| TypeScript configuration | [`tsconfig.json`](../tsconfig.json) | Strict TypeScript settings and the `@/*` alias to `src/*`. |
-| Next.js configuration | [`next.config.mjs`](../next.config.mjs) | React strict mode and removal of the `X-Powered-By` header. |
-| Ambient types | [`next-env.d.ts`](../next-env.d.ts) | Next.js TypeScript declarations. |
-| Environment template | [`.env.example`](../.env.example) | Server-only names for database, auth, payment, AI, storage, email, and job secrets. |
-| Prisma client singleton | [`src/lib/prisma.ts`](../src/lib/prisma.ts) | One PrismaClient instance across development hot reloads. |
+| **Finished** | Repository and application scaffold | Next.js 14 App Router, TypeScript strict mode, `@/*` alias, Prisma client singleton, package scripts, and `.env.example` exist at the repository root. `npm run dev` reached the ready state in `evidence/03-server-start.txt`. |
+| **Finished** | Data model and migration | `prisma/schema.prisma` contains the 22 models from PRD sections 8 and 10 plus the owner-approved `PasswordResetToken` model (23 total), with enums, relations, indexes, and `ContentChunk.embedding` as `Unsupported("vector(768)")`. The checked-in `init_auth` migration creates the tables and the `vector` extension. |
+| **Finished** | Design-system integration | The semantic tokens from task-01 are copied to `src/styles/main-tokens.css`. Application CSS consumes semantic roles, not primitive palette variables. The visitor home screen is a fixed `100vh` layout with no primitive colour leakage. |
+| **Finished** | Authentication slice in development | Signup, password login, six-digit email-code request and verification, forgot-password, reset-password, session lookup, and signout routes exist. Matching pages exist for signup, login, forgot-password, and reset-password. Passwords use bcrypt; OTPs and reset tokens are stored as SHA-256 hashes. The recorded response log covers signup, password login, and the OTP routes; forgot-password and reset-password are implemented but are not covered by that log. |
+| **Finished** | Database-write proof | Signup returned `201` with a Prisma `INSERT INTO "User"` in `evidence/11-write-succeeded-logs.txt`; login and OTP calls returned `200`; persisted rows are shown in `evidence/12-database-rows.png`. A broken `DATABASE_URL` returned `500` and wrote nothing (`evidence/13-write-failed-logs.txt`, `docs/false-success.md`). |
+| **Half done** | Session and auth hardening | The flow works in development, but the session cookie is an unsigned user ID, the password endpoints have no rate limits, and email delivery is not production-ready. See defects 1, 4, and 5. |
+| **Half done** | Visitor home and dashboard | The home page is `100vh` and uses semantic tokens, but the catalogue is hardcoded in `src/lib/catalog-preview.ts`, "Browse Catalog" points at a missing `/catalog` route, and the footer claims a Wasm runtime and a 24-hour offline cache that do not exist. The dashboard is a client-side session check over the same hardcoded cards and has no step links. See defects 2 and 3. |
+| **Half done** | Database and runtime verification | The migration and writes were verified against a local PostgreSQL database only. No managed PostgreSQL instance, production build, deployment, real inbox, real payment, or 4 GB device was recorded. The only recorded first load is 19,815 ms in `next dev` (`docs/performance-note.md`); production performance is unmeasured. |
+| **Not started** | Five learning features | Guided step page, check runner, autosave/resume and cross-device sync, hint ladder with AI mentor, and progress map. |
+| **Not started** | Browser runtime | Web Worker, Pyodide, WebR, Biowasm, client-side check execution, and IndexedDB resilience cache. |
+| **Not started** | Paid path | Catalogue, step, dataset, mentor, sync, and billing routes; `assertStepAccess`; Flutterwave checkout, webhook, and reconcile job; entitlement enforcement. |
+| **Not started** | Content and AI | Content importer, chunking, embeddings, vector search, mentor routing, token ceilings, and output checks. |
+| **Not started** | Operations and verification | Instrumentation events, "Delete my data", owner scripts, automated tests, CI, and the real-device/real-inbox/real-payment gates. |
 
-### 3.2 Data model
+Fixed during the task and kept in evidence: the scaffold first started from a nested folder, port 3000 was occupied, the root page was missing (404), and a changed `DATABASE_URL` caused a 500 with no write. Those issues are resolved; the failure and correction records remain in `evidence/05` through `evidence/13`.
 
-| Deliverable | Path | Purpose |
-|---|---|---|
-| Prisma schema | [`prisma/schema.prisma`](../prisma/schema.prisma) | The approved 23-model schema with enums, relations, indexes, pgvector, and soft-delete invariants. |
-| Initial auth migration | [`prisma/migrations/20261030105045_init_auth`](../prisma/migrations/20261030105045_init_auth) | Creates the database tables, enums, indexes, and the `vector` extension. |
+**What this folder contains.** `docs/` holds the task write-ups (`scaffold-prompt.md`, `model-choices.md`, `performance-note.md`, `false-success.md`, and `working-tree.md`). `evidence/` holds the terminal logs, the Prisma Studio screenshot, the branch drawing, and the walkthrough video. The code produced by the task lives at the repository root (`src/`, `prisma/`, `package.json`, `tsconfig.json`, `next.config.mjs`, and `.env.example`).
 
-### 3.3 Design system and visitor interface
+**Evidence index.** `evidence/01-agent-plan.txt` records the context review and approval stop. `evidence/02-files-created.txt` and `evidence/02-scaffold-summary.txt` record the scaffold and the zero-primitive style audit. `evidence/04-first-load.txt` and `evidence/10-404-resolved.txt` record the root `200`. `evidence/11-write-succeeded-logs.txt` and `evidence/12-database-rows.png` record the successful database write. `evidence/14-working-tree-drawing.jpg` and `evidence/21-walkthrough.mp4` record the branch-flow drawing and the walkthrough.
 
-| Deliverable | Path | Purpose |
-|---|---|---|
-| Semantic token stylesheet | [`src/styles/main-tokens.css`](../src/styles/main-tokens.css) | Light and dark semantic roles, typography utilities, and elevation shadows from task-01. |
-| Global reset | [`src/app/globals.css`](../src/app/globals.css) | Document-level bindings using semantic tokens only. |
-| Root layout | [`src/app/layout.tsx`](../src/app/layout.tsx) | App Router HTML shell, DM Sans, metadata, and viewport settings. |
-| Visitor home screen | [`src/app/page.tsx`](../src/app/page.tsx) | Exactly `100vh`, catalogue preview, access labels, and sign-in entry point. |
-| Home screen styles | [`src/app/page.module.css`](../src/app/page.module.css) | Scoped responsive styles with zero primitive colour references. |
+**Review.** The scaffold was followed by the authentication slice on `feature-authentication`, merged in PR [#1](https://github.com/ChijiokeUhegwu/Nucleobridge/pull/1).
 
-### 3.4 Authentication and database-write proof
+## 3. The Stack, and Why
 
-| Deliverable | Path | Purpose |
-|---|---|---|
-| Sign-up API | [`src/app/api/auth/signup/route.ts`](../src/app/api/auth/signup/route.ts) | Creates the user and returns `201` after a successful insert. |
-| Password login API | [`src/app/api/auth/login-password/route.ts`](../src/app/api/auth/login-password/route.ts) | Verifies the bcrypt password and starts a session. |
-| OTP request API | [`src/app/api/auth/otp/request/route.ts`](../src/app/api/auth/otp/request/route.ts) | Creates and emails a six-digit code under the PRD limits. |
-| OTP verify API | [`src/app/api/auth/otp/verify/route.ts`](../src/app/api/auth/otp/verify/route.ts) | Checks the code hash, expiry, and attempt limit. |
-| Forgot-password API | [`src/app/api/auth/forgot-password/route.ts`](../src/app/api/auth/forgot-password/route.ts) | Creates a single-use reset token without revealing account existence. |
-| Reset-password API | [`src/app/api/auth/reset-password/route.ts`](../src/app/api/auth/reset-password/route.ts) | Validates the token and replaces the password hash. |
-| Authentication helpers | [`src/lib/auth.ts`](../src/lib/auth.ts) | Password hashing, OTP generation, and token hashing. |
-| Mail helpers | [`src/lib/mail.ts`](../src/lib/mail.ts) | SMTP delivery for OTP and password-reset messages, with a mock fallback. |
-| Auth pages and styles | [`src/app/signup/page.tsx`](../src/app/signup/page.tsx), [`src/app/login/page.tsx`](../src/app/login/page.tsx), [`src/app/forgot-password/page.tsx`](../src/app/forgot-password/page.tsx), [`src/app/reset-password/page.tsx`](../src/app/reset-password/page.tsx), [`src/styles/auth-forms.module.css`](../src/styles/auth-forms.module.css) | Learner-facing forms for the authentication flow. |
-
-The password-based part of the slice implements the owner-approved Option B amendment recorded in [`decisions.md`](../.agents/rules/decisions.md). It does not replace the PRD's passwordless email-code path; both sign-in methods were implemented.
-
----
-
-## 4. What Was Decided (Architectural Decisions & Trade-offs)
-
-### 1. Next.js App Router on the Node.js runtime
-- **Decision:** Scaffold a Next.js App Router application with TypeScript and keep route handlers on the Node.js runtime.
-- **Why:** Prisma, email, payments, and session checks need Node APIs. The PRD and `structure.md` require Next.js, while the prompt's "Node.js" wording describes the runtime rather than a separate server framework.
-
-### 2. Provider-agnostic PostgreSQL with pgvector
-- **Decision:** Use standard pooled and direct PostgreSQL connection strings and keep the database provider open. Do not hard-code a provider or a specific PostgreSQL major version in application code.
-- **Why:** The PRD requires managed PostgreSQL with pgvector but leaves the provider open in `decisions.md` (Q11). Standard URLs keep local, test, and managed environments interchangeable.
-
-### 3. Reproduce the approved data model, then gate every change
-- **Decision:** Reproduce the PRD's 22-model schema exactly, then add only the owner-approved authentication amendment: `firstName`, `lastName`, `passwordHash`, and `PasswordResetToken`.
-- **Why:** `schema.md` treats the PRD model as the only approved model. The amendment is recorded in `decisions.md` and keeps the learner's display name and password-reset flow available without inventing models.
-
-### 4. Keep Prisma on the server and use one client instance
-- **Decision:** Keep the Prisma client in `src/lib/prisma.ts` as a global singleton and never import database code from a client component.
-- **Why:** A singleton prevents connection exhaustion during hot reload, and keeping database access server-side protects secrets and paid content.
-
-### 5. Zero primitive colour exposure
-- **Decision:** Copy the compiled semantic tokens into `src/styles/main-tokens.css` and consume only semantic variables in application CSS.
-- **Why:** Task-01 established that primitive palette variables must stay out of component code. This keeps Light/Dark swapping reliable and prevents hardcoded brand colours from spreading through the application.
-
-### 6. The visitor home screen is a catalogue, not a lesson
-- **Decision:** Build the root screen as a `100vh` visitor catalogue with case-study titles, summaries, and access labels, plus a sign-in entry point.
-- **Why:** Signed-out visitors may see the catalogue and access labels, but no lesson content. The fixed-height layout also matches the low-resource, minimal-scroll design direction.
-
-### 7. Verify database writes with server evidence
-- **Decision:** Treat a `201 Created` response, a matching Prisma `INSERT`, and a visible row in Prisma Studio as the proof that the database write worked. Do not trust a green UI banner alone.
-- **Why:** The `DATABASE_URL` failure showed how an optimistic interface could report success while the write failed. Server status codes and database logs are the reliable evidence.
-
-### 8. Keep the working tree reviewable
-- **Decision:** Record the single-branch working-tree risk and recommend feature branches, pull requests, and a tested main branch before production merges.
-- **Why:** Once `main` is deployed, a broken commit becomes visible to learners immediately. The drawing and explanation are in [`evidence/14-working-tree-drawing.jpg`](evidence/14-working-tree-drawing.jpg) and [`docs/working-tree.md`](docs/working-tree.md).
-
----
-
-## 5. What Was Got Wrong (Defects & Retrospective)
-
-### 1. The scaffold started in a nested folder
-- **What happened:** `npm run dev` at the repository root failed with `ENOENT` because `package.json` was inside a nested `nested-app` folder.
-- **Correction:** Start the server from the directory that contains the manifest, and keep the final scaffold at the repository root. The failure and corrected startup are retained in evidence.
-
-### 2. Port 3000 was already occupied
-- **What happened:** Next.js reported that port 3000 was in use and fell back to port 3001. The first compile on the fallback port took 58.9 seconds, so a tester could easily test the wrong server or mistake a slow cold start for a broken build.
-- **Correction:** Identify the listening process with `netstat -ano`, stop it, and confirm the actual URL before recording results.
-
-### 3. The root route returned 404
-- **What happened:** The first root request returned `404` because `src/app/page.tsx` was missing from the App Router directory.
-- **Correction:** Add the missing page, wait for the route to compile, and verify `GET /` returns `200` with the expected layout.
-
-### 4. A broken database URL produced a false-success risk
-- **What happened:** After `DATABASE_URL` was altered, the signup route failed with a Prisma initialisation error and returned `500`. No row was written. The UI showed an error in this build, but the episode demonstrated how an optimistic interface could have shown a success state and hidden the failed write.
-- **Correction:** Restore the environment, re-run the flow, and require a `201` plus an `INSERT` log before treating the database as connected. The full retrospective is in [`docs/false-success.md`](docs/false-success.md).
-
-### 5. Development-mode load time was far from the target
-- **What happened:** The first home-page load took 19,815 ms. The performance target was in the tens of milliseconds.
-- **Correction:** Record the cause: `next dev` compiles 470 modules on demand, and the first Prisma connection adds cold-start cost. A production build (`next build` and `next start`) is required before judging the target. The analysis is in [`docs/performance-note.md`](docs/performance-note.md).
-
-### 6. The single-branch working-tree risk
-- **What happened:** The repository did not yet enforce a branch and merge workflow. A single branch would expose every experimental change directly to the only line of code.
-- **Correction:** Document the risk and the safer feature-branch, pull-request, and tested-main flow in [`docs/working-tree.md`](docs/working-tree.md).
-
----
-
-## 6. Verification and Evidence
-
-| Evidence | What it proves |
+| Choice | Why this, rather than the alternative |
 |---|---|
-| [`01-agent-plan.txt`](evidence/01-agent-plan.txt) | Context review, discrepancy list, requirement summary, and the approval stop before code. |
-| [`02-files-created.txt`](evidence/02-files-created.txt) | The scaffold files created and the initial file-level verification. |
-| [`02-scaffold-summary.txt`](evidence/02-scaffold-summary.txt) | Deliverable list, zero-hex/zero-primitive style audit, and the `100vh` constraint. |
-| [`03-server-start.txt`](evidence/03-server-start.txt) | The Next.js development server reached the ready state. |
-| [`04-first-load.txt`](evidence/04-first-load.txt) | The first home-page compile and `200` response. |
-| [`05-nested-folder-error.txt`](evidence/05-nested-folder-error.txt) / [`06-nested-folder-fixed.txt`](evidence/06-nested-folder-fixed.txt) | The nested-folder `ENOENT` failure and the corrected startup directory. |
-| [`07-port-conflict.txt`](evidence/07-port-conflict.txt) / [`08-port-conflict-resolved.txt`](evidence/08-port-conflict-resolved.txt) | The port 3000 collision, the listening process, and the fallback port. |
-| [`09-404-error.txt`](evidence/09-404-error.txt) / [`10-404-resolved.txt`](evidence/10-404-resolved.txt) | The missing `page.tsx`, the 404, and the resolved `200`. |
-| [`11-write-succeeded-logs.txt`](evidence/11-write-succeeded-logs.txt) | `201` signup with a Prisma `INSERT`, plus `200` login and OTP routes. |
-| [`12-database-rows.png`](evidence/12-database-rows.png) | Persisted user rows in Prisma Studio, including hashed passwords. |
-| [`14-working-tree-drawing.jpg`](evidence/14-working-tree-drawing.jpg) | The hand-drawn working-tree and branch-flow diagram. |
-| [`21-walkthrough.mp4`](evidence/21-walkthrough.mp4) | The recorded walkthrough of the running application and database flow. |
+| **Next.js 14 App Router with TypeScript** | One deployable holds the pages and server route handlers with shared types, rather than a separate SPA and API with a second deployment, a second origin, and CORS surface. |
+| **Node.js runtime for route handlers** | Prisma, bcrypt, and Nodemailer need Node APIs, rather than the edge runtime that would force different libraries and break the approved server stack. |
+| **PostgreSQL with pgvector** | Relational records and 768-dimensional embeddings stay in one transactional database, rather than a separate vector service such as Pinecone with its synchronization drift and extra billing relationship. |
+| **Prisma 5** | The schema, relations, and migrations are typed and reproducible, rather than hand-written SQL everywhere; raw SQL is reserved for `ContentChunk.embedding`. |
+| **bcryptjs** | Adaptive password hashing works without a native build step on Windows, rather than a plain hash or a hand-rolled `crypto.scrypt` solution with custom salting, comparison, and upgrade handling. |
+| **Nodemailer over SMTP** | No email provider is chosen in the PRD or `.agents/rules/decisions.md`, so a generic SMTP transport keeps the provider replaceable, rather than a provider-specific SDK that would lock the choice before the owner makes it. |
+| **CSS Modules with the task-01 semantic tokens** | This preserves the light/dark token contract and keeps primitive palette values out of component code, rather than Tailwind or ad hoc CSS that would duplicate the design system and invite hardcoded values. |
+| **Checked-in Prisma migration** | A fresh clone applies the same schema with the checked-in `init_auth` migration, rather than `prisma db push`, which would leave no migration history to apply or review. |
 
-Supporting write-ups:
+## 4. Getting Started
 
-- [`docs/scaffold-prompt.md`](docs/scaffold-prompt.md) — the original and revised scaffold prompts.
-- [`docs/model-choices.md`](docs/model-choices.md) — the Antigravity/Open Code task split and execution observations.
-- [`docs/performance-note.md`](docs/performance-note.md) — the first-load timing analysis.
-- [`docs/false-success.md`](docs/false-success.md) — the database failure and false-success risk.
-- [`docs/working-tree.md`](docs/working-tree.md) — the single-branch working-tree risk.
+### Prerequisites
 
-**Manual verification note.** The evidence above is from the development server, HTTP responses, Prisma logs, and Prisma Studio. No production build, real-inbox delivery, real payment, or WebAssembly runtime was verified at this stage; those are later gates.
+- Node.js 20.x or newer.
+- PostgreSQL with the `vector` extension available. The migration runs `CREATE EXTENSION IF NOT EXISTS "vector"`, so the database user must be allowed to create it, or the extension must already be installed.
 
----
+### Commands
 
-## 7. Hand-off State
+```bash
+# 1. Clone the repository
+git clone https://github.com/ChijiokeUhegwu/Nucleobridge.git
+cd Nucleobridge
 
-At the end of this stage, the repository had:
+# 2. Install dependencies
+npm install
 
-- A runnable Next.js App Router application with TypeScript.
-- A PostgreSQL/Prisma schema and the `init_auth` migration.
-- Semantic Light/Dark tokens consumed without primitive leakage.
-- A `100vh` visitor home screen that exposes catalogue titles and access labels only.
-- A verified authentication slice that persists users, hashes passwords, stores hashed OTP/reset tokens, and sends email through the configured SMTP transport.
-- A documented defect and evidence trail for the next task.
+# 3. Create the local environment file
+# Windows PowerShell:
+Copy-Item .env.example .env
+# macOS/Linux:
+cp .env.example .env
+```
 
-Still outside this stage: the guided step page, in-browser WebAssembly execution, the check runner, autosave/resume and sync, the hint ladder and AI mentor, the progress map, the catalog API, Flutterwave payments, and the full task-05 session/compliance hardening.
+**Step 4.** Open `.env` and set `DATABASE_URL` and `DIRECT_DATABASE_URL` to the PostgreSQL database, using the same database name in both. For a local PostgreSQL install, create that database first if it does not exist (for example, `createdb nucleobridge`). The two URLs may be the same locally; a managed provider usually gives separate pooled and direct URLs.
 
-**Documentation note.** This README and the files under `docs/` and `evidence/` are the task-02 record. The root `README.md` contains the project-wide overview and status table.
+**Step 5.** For local sign-in without a real inbox, remove the placeholder text from `EMAIL_SERVER_USER` and `EMAIL_SERVER_PASSWORD` in `.env`. The mail helper will then print the six-digit code in the dev-server terminal instead of trying SMTP. Leave the payment, AI, storage, and reconcile keys as placeholders until those features exist.
 
-**Pull Request URL:** https://github.com/ChijiokeUhegwu/Nucleobridge/pull/1
+```bash
+# 6. Generate the Prisma client
+npm run prisma:generate
+
+# 7. Apply the checked-in migration
+npm run prisma:migrate
+
+# 8. Start the development server
+npm run dev
+```
+
+Open `http://localhost:3000`. Create an account at `/signup`, or sign in at `/login` with either the password form or the six-digit email-code form.
+
+**Notes.**
+
+- There is no seed script and no `db:seed` command. The visitor catalogue is a hardcoded preview in `src/lib/catalog-preview.ts`.
+- If port 3000 is already in use, Next.js will start on another port and print the URL. Set `NEXTAUTH_URL` to that URL if you want the password-reset and welcome links to point at the running server.
+- The `init_auth` migration is the only migration in the repository. If the migration fails on `CREATE EXTENSION "vector"`, install pgvector in the database before retrying.
+
+## 5. Environment Variables
+
+Names only. Do not commit values. The status column records what the current code actually reads, not what a later task will need.
+
+| Variable | What it is for | Current use |
+|---|---|---|
+| `DATABASE_URL` | Pooled PostgreSQL connection string used by the Prisma client at runtime. | Used by `prisma/schema.prisma`. |
+| `DIRECT_DATABASE_URL` | Direct, unpooled PostgreSQL connection string used for migrations. | Used by `prisma/schema.prisma`. |
+| `NEXTAUTH_URL` | Base URL used to build password-reset and welcome links. | Used in `src/lib/mail.ts` and the forgot-password route. It is not an Auth.js session setting. |
+| `NEXTAUTH_SECRET` | Secret for signing Auth.js sessions. | Template only. No Auth.js session signing exists; see defect 1. |
+| `FLUTTERWAVE_PUBLIC_KEY` | Public key for Flutterwave checkout. | Reserved. No payment code exists yet. |
+| `FLUTTERWAVE_SECRET_KEY` | Secret key for verifying and refunding Flutterwave transactions. | Reserved. |
+| `FLUTTERWAVE_WEBHOOK_HASH` | Secret hash for validating Flutterwave webhooks. | Reserved. |
+| `FREE_MODEL_API_KEY` | API key for the free AI pool. | Reserved. |
+| `PAID_MODEL_API_KEY` | API key for the paid AI pool. | Reserved. |
+| `EMBEDDING_MODEL_API_KEY` | API key for the embedding provider. | Reserved. |
+| `DATASET_STORAGE_URL` | Base URL for private dataset storage. | Reserved. |
+| `DATASET_STORAGE_SECRET_KEY` | Secret for signed dataset downloads. | Reserved. |
+| `EMAIL_SERVER_HOST` | SMTP host for sign-in codes, password resets, and welcome mail. | Used by `src/lib/mail.ts`. |
+| `EMAIL_SERVER_PORT` | SMTP port. | Used by `src/lib/mail.ts`. |
+| `EMAIL_SERVER_USER` | SMTP username. | Used by `src/lib/mail.ts`. When not set, mail is mocked to the server console. |
+| `EMAIL_SERVER_PASSWORD` | SMTP password or API token. | Used by `src/lib/mail.ts`. When not set, mail is mocked to the server console. |
+| `EMAIL_FROM` | Sender address on outgoing mail. | Used by `src/lib/mail.ts`. |
+| `EMAIL_SERVER_SECURE` | Forces SMTP TLS on or off. | Read by `src/lib/mail.ts`, but it is missing from `.env.example`; see defect 4. |
+| `RECONCILE_JOB_SECRET` | Bearer secret for the payment reconcile job. | Reserved. The job is not built. |
+| `SIGNUPS_ENABLED` | Emergency switch that blocks new account creation when turned off. | Used in the signup and OTP verify routes. See defect 6. |
+
+## 6. What This Deliberately Does Not Do
+
+- **It does not build the five learning features.** The guided step page, check runner, autosave/resume and sync, hint ladder with AI mentor, and progress map are later milestones. Task 02 exists to make the repository and database foundation real first.
+- **It does not execute code in the browser.** There is no Web Worker, Pyodide, WebR, Biowasm, client-side check engine, or IndexedDB cache. Those need the browser-runtime design and a real 4 GB device gate, neither of which was part of this scaffold.
+- **It does not implement the paid path.** There is no authored paid content yet, so there is no bundle, dataset, mentor, or sync route to guard. `assertStepAccess` and the Flutterwave flow belong to the access and payment tasks. The product's one critical invariant is therefore not yet testable in the application.
+- **It does not implement the content importer, vector search, or AI mentor.** The schema has the `ContentChunk` vector column, but no importer, embedding call, retrieval query, mentor routing, model choice, token ceiling, or output filter exists. The AI provider keys in the template are reserved.
+- **It does not record instrumentation, delete learner data, run owner scripts, or provide an admin/metrics screen.** Those are later compliance and operations work. Version one deliberately has no metrics dashboard screen.
+- **It does not claim production readiness.** No production build, deployment, managed database, real inbox, real payment, or 4 GB device run is recorded. The evidence is from `next dev`, HTTP responses, Prisma logs, and Prisma Studio.
+- **It does not add the out-of-scope product surface.** No native or installable app, offline-first product, video lessons, custom uploads, patient data, certificates, leaderboards, forums, live human grading, coupons, multiple plans, or auto-renewing subscriptions.
+
+## 7. Known Defects
+
+These are current defects in the checkout, not a wishlist and not a repeat of issues already fixed during the task. Code paths are relative to the repository root; this README lives in `task-02-repository-and-scaffold/`. Line numbers refer to the files as committed now; the file is the source of truth if a line moves.
+
+1. **Critical: the session cookie is an unsigned user ID.** `src/lib/session.ts:4-33` stores `nb_session_user_id` and `getSessionUser()` trusts whatever value is present. The same raw user ID is set by `src/app/api/auth/signup/route.ts:101`, `src/app/api/auth/login-password/route.ts:57`, and `src/app/api/auth/otp/verify/route.ts:108`. There is no signature, no JWT, no server-side session row, and no rotation. Any leak of a user ID is a full account takeover. Fix this before another learner-facing feature is added.
+
+2. **High: `/catalog` is a dead link on the public home page.** `src/app/page.tsx:90` points "Browse Catalog" at `/catalog`. There is no `src/app/catalog` route and no catalogue API, so one of the two calls to action on the only public screen returns a 404.
+
+3. **High: the home page claims runtime and offline features that are not built.** `src/app/page.tsx:101` says "Wasm Runtime Engine: Ready" and `src/app/page.tsx:114` says "24h Offline Resilience Cache". There is no Web Worker, WebAssembly loader, or IndexedDB cache under `src/`. This is the same false-success pattern that `docs/false-success.md` warns about, applied to the product status line.
+
+4. **High: without real SMTP configuration, email delivery either fails or silently logs the code.** `src/lib/mail.ts:14-16` treats missing credentials, or credentials containing a known placeholder marker, as "not configured." `src/lib/mail.ts:48-59` and `src/lib/mail.ts:98-109` print codes to the console and return `true` when no transporter exists. `.env.example:32-36` ships non-empty placeholder credentials that do not match that marker, so a fresh copy attempts SMTP to the placeholder host and the OTP request returns `500` (`src/app/api/auth/otp/request/route.ts:58-64`). `src/lib/mail.ts:10` also reads `EMAIL_SERVER_SECURE`, which `.env.example` does not list. No real inbox was verified.
+
+5. **High: there are no rate limits on password signup, password login, or forgot-password.** `src/app/api/auth/login-password/route.ts` has no attempt counter or delay. `src/app/api/auth/signup/route.ts` and `src/app/api/auth/forgot-password/route.ts` have no limiter. The OTP path limits three codes per email per hour (`src/app/api/auth/otp/request/route.ts:27-41`) and five wrong attempts per code (`src/app/api/auth/otp/verify/route.ts:45-51`), but there is no IP-based or new-account limit. This does not meet the rules' requirement for sign-in-code and new-account rate limits.
+
+6. **Medium: disabling signups burns a valid OTP before rejecting a new learner.** `src/app/api/auth/otp/verify/route.ts:70-74` marks the code consumed, then `src/app/api/auth/otp/verify/route.ts:83-88` returns `403` for a new email when signups are paused. The learner loses the code, and the code row still counts toward the three-per-hour request limit. The switch should be checked before the code is consumed.
+
+7. **Medium: persona names were copied into the signup UI.** `src/app/signup/page.tsx:107` uses `Tunde` and `src/app/signup/page.tsx:124` uses `Adeyemi` as input placeholders. `AGENTS.md` says the personas are design tools, not code or test data. Replace them with neutral labels.
+
+8. **High for release readiness: there are no automated tests and no test script.** `package.json:6-13` has no `test` script, and there are no `*.test.*` or `*.spec.*` files in the repository. PRD goal G-10 and `.agents/rules/testing.md` require an automated test that proves paid content is not served without PRO. That test cannot exist until the access guard and paid routes exist, but the harness should land with the first protected route.
+
+9. **Medium: the repository-root README is stale and will send a new contributor down the wrong path.** `../README.md:69` instructs `npm run db:seed`, which `package.json:6-13` does not define. `../README.md:127-138` still says there is no root `package.json`, no `prisma/schema.prisma`, and that the task folders are blank. `../README.md:31` names Neon and Supabase even though the provider remains an open question in `.agents/rules/decisions.md` (Q11). This task-02 README is the accurate scaffold record; the root README should be updated or removed before the next hand-off.
+
+10. **Low: the viewport disables pinch zoom.** `src/app/layout.tsx:10-14` sets `maximumScale: 1`, which blocks zoom on the mobile devices this product targets. Remove `maximumScale` or allow a usable maximum.
+
+11. **Low: the zero-hex audit excludes the HTML email templates.** `src/lib/mail.ts:68-77`, `src/lib/mail.ts:119-128`, and `src/lib/mail.ts:181-193` contain hardcoded brand hex values, while `evidence/02-scaffold-summary.txt:21` says zero hardcoded hex values were found in app code and styles. The CSS is clean; the claim is scoped too broadly. Either move the email colours to documented email tokens or narrow the audit claim.
+
+12. **Low: reset and welcome links default to a hardcoded localhost URL even when Next.js falls back to another port.** `src/lib/mail.ts:148` and `src/app/api/auth/forgot-password/route.ts:47` fall back to that localhost URL. The task's own port-collision evidence (`evidence/07-port-conflict.txt`) shows this is a real local setup, not a hypothetical. Require `NEXTAUTH_URL` in development or build links from the request origin.
