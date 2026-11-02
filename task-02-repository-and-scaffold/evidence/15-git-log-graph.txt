@@ -1,0 +1,19 @@
+PS C:\Users\Chijioke Uhegwu\Desktop\Product Folder\Nucleobridge> git log --all --decorate --oneline --graph
+* 16be1d5 (HEAD -> main, origin/main) docs: add authentication PR link to readme
+*   36be1b4 Merge pull request #1 from ChijiokeUhegwu/feature-authentication
+|\
+| * 9cc63c0 (origin/feature-authentication, feature-authentication) docs: Update the documentation for task-02
+| * 24a0992 feat: set up the authentication flow for nucleobridge
+| * 540053e Implement authentication flow: sign up, unified sign in (password and OTP via Gmail SMTP), and password reset
+| * 9e2e32c Update Prisma schema: add firstName, lastName, passwordHash, and PasswordResetToken model
+etToken model
+|/
+* 70dded5 Scaffold Next.js App Router application, design tokens, and 100vh home screen 
+* c4fdfeb Add initial Prisma schema with 22 models and pgvector support
+* 219851d Fix: Remove unwanted files from the project repository to avoid conflict      
+* 2f5f64f docs: Update .gitignore file
+* e3973c5 docs: Include interview.md and evidence files for broken referencing test     
+* c780535 Update the README file for task-01
+* 564c211 feat(design-system): implement design tokens, documentation, compiler scripts, and login demo
+* 17293e3 Set up project repository and update project details in the README.md
+(END)

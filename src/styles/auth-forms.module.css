@@ -21,7 +21,17 @@
   align-items: center;
   gap: 12px;
   margin-bottom: 24px;
+  cursor: pointer;
   text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.brandHeader:hover {
+  opacity: 0.85;
+}
+
+.brandHeader:hover .brandTitle {
+  color: var(--color-primary);
 }
 
 .brandIcon {
@@ -40,6 +50,7 @@
 .brandTitle {
   color: var(--color-on-surface);
   letter-spacing: -0.5px;
+  transition: color 0.15s ease;
 }
 
 .card {
@@ -81,9 +92,15 @@
   border-radius: 6px;
   background-color: transparent;
   color: var(--color-on-surface-variant);
+  cursor: pointer;
   font-weight: 500;
   transition: all 0.15s ease;
   text-align: center;
+}
+
+.tabButton:hover:not(.tabButtonActive) {
+  background-color: var(--color-surface-container-high);
+  color: var(--color-on-surface);
 }
 
 .tabButtonActive {
@@ -150,6 +167,7 @@
   border-radius: 8px;
   background-color: var(--color-primary);
   color: var(--color-on-primary);
+  cursor: pointer;
   font-weight: 600;
   box-shadow: var(--shadow-soft);
   margin-top: 6px;
@@ -173,6 +191,7 @@
   background-color: var(--color-surface-container);
   color: var(--color-on-surface);
   border: 1px solid var(--color-outline);
+  cursor: pointer;
   font-weight: 500;
   margin-top: 8px;
   transition: background-color 0.15s ease;
@@ -180,6 +199,11 @@
 
 .secondaryButton:hover:not(:disabled) {
   background-color: var(--color-surface-container-high);
+}
+
+.secondaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Alerts */
@@ -215,12 +239,14 @@
 
 .textLink {
   color: var(--color-primary);
+  cursor: pointer;
   font-weight: 500;
   text-decoration: none;
-  transition: opacity 0.15s ease;
+  transition: color 0.15s ease, opacity 0.15s ease;
 }
 
 .textLink:hover {
+  color: var(--color-on-primary-container);
   text-decoration: underline;
   opacity: 0.85;
 }
