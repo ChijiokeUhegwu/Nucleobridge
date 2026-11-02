@@ -7,13 +7,13 @@ import { SESSION_COOKIE_NAME, sessionCookieOptions } from '@/lib/session';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { firstName, lastName, email, password, confirmPassword } = body;
+    const { firstName, lastName, email, password, acceptedTerms } = body;
 
     const cleanFirstName = String(firstName ?? '').trim();
     const cleanLastName = String(lastName ?? '').trim();
 
     // Validation
-    if (!cleanFirstName || !cleanLastName || !email || !password || !confirmPassword) {
+    if (!cleanFirstName || !cleanLastName || !email || !password) {
       return NextResponse.json(
         { error: 'All fields are required.' },
         { status: 400 }
@@ -29,16 +29,16 @@ export async function POST(request: Request) {
       );
     }
 
-    if (password !== confirmPassword) {
+    if (password.length < 8) {
       return NextResponse.json(
-        { error: 'Passwords do not match.' },
+        { error: 'Password must be at least 8 characters long.' },
         { status: 400 }
       );
     }
 
-    if (password.length < 8) {
+    if (acceptedTerms !== true) {
       return NextResponse.json(
-        { error: 'Password must be at least 8 characters long.' },
+        { error: 'You must accept the Terms and Conditions and Privacy Policy.' },
         { status: 400 }
       );
     }

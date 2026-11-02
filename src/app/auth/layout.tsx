@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
 export const metadata: Metadata = {
-  title: 'Forgot Password',
+  title: 'Account',
 };
 
-export default function ForgotPasswordLayout({ children }: { children: ReactNode }) {
+export default function AuthLayout({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }

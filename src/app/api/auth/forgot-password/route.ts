@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { authHref } from '@/lib/auth-routes';
 import { generateResetToken, hashToken } from '@/lib/auth';
 import { sendPasswordResetEmail } from '@/lib/mail';
 
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
 
       // Build reset URL
       const hostUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-      const resetUrl = `${hostUrl}/reset-password?token=${rawToken}`;
+      const resetUrl = `${hostUrl}${authHref('reset-password', { token: rawToken })}`;
 
       await sendPasswordResetEmail(trimmedEmail, resetUrl, rawToken);
     }

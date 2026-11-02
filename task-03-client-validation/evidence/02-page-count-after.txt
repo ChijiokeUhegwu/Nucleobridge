@@ -1,0 +1,10 @@
+  3 pages:                                           mented      
+                                                                    
+     1. / — src/app/page.tsx                            up          
+     2. /auth — src/app/auth/page.tsx (renders login,   ser"` in    
+        signup, forgot-password, and reset-password     n and OTP   
+        views)                                          wn in       
+     3. /dashboard — src/app/dashboard/page.tsx                     
+                                                        ing (       
+     The old /login, /signup, /forgot-password, and /   alse-       
+     reset-password routes are redirects, not pages.

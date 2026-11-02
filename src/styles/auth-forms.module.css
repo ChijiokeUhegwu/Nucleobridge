@@ -160,6 +160,62 @@
   padding: 12px 16px;
 }
 
+.passwordField {
+  position: relative;
+}
+
+.passwordInput {
+  padding-right: 46px;
+}
+
+.passwordToggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  color: var(--color-on-surface-variant);
+  background-color: transparent;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.passwordToggle:hover {
+  color: var(--color-on-surface);
+  background-color: var(--color-surface-container);
+}
+
+.passwordToggle:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.termsRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  flex-shrink: 0;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.termsLabel {
+  color: var(--color-on-surface-variant);
+  line-height: 1.5;
+  cursor: pointer;
+}
+
 /* Action Buttons */
 .submitButton {
   width: 100%;

@@ -1,0 +1,147 @@
+.page {
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--color-background);
+  color: var(--color-on-background);
+  padding: 40px 16px 64px;
+}
+
+.container {
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.brandMark {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.brandName {
+  color: var(--color-on-surface);
+}
+
+.backLink {
+  color: var(--color-primary);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--color-on-primary-container);
+  text-decoration: underline;
+}
+
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 16px;
+  padding: 32px 28px;
+  box-shadow: var(--shadow-soft);
+}
+
+.title {
+  color: var(--color-on-surface);
+  margin-bottom: 8px;
+}
+
+.effective {
+  color: var(--color-on-surface-variant);
+  margin-bottom: 28px;
+}
+
+.content {
+  color: var(--color-on-surface-variant);
+}
+
+.content h2 {
+  color: var(--color-on-surface);
+  margin: 28px 0 10px;
+  font-size: 20px;
+  line-height: 1.4;
+}
+
+.content h2:first-child {
+  margin-top: 0;
+}
+
+.content h3 {
+  color: var(--color-on-surface);
+  margin: 20px 0 8px;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.content p {
+  margin: 0 0 12px;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.content ul {
+  margin: 0 0 14px 20px;
+  padding: 0;
+}
+
+.content li {
+  margin-bottom: 8px;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.content a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.content a:hover {
+  color: var(--color-on-primary-container);
+}
+
+.content strong {
+  color: var(--color-on-surface);
+}
+
+.footer {
+  margin-top: 28px;
+  display: flex;
+  justify-content: center;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 24px 12px 40px;
+  }
+
+  .card {
+    padding: 24px 18px;
+  }
+
+  .header {
+    margin-bottom: 20px;
+  }
+}
