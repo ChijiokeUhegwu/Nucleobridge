@@ -35,6 +35,36 @@ function AuthLoading() {
   );
 }
 
+function EyeIcon({ hidden }: { hidden: boolean }) {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {hidden ? (
+        <>
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+          <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+          <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+          <path d="M1 1l22 22" />
+        </>
+      ) : (
+        <>
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" />
+          <circle cx="12" cy="12" r="3" />
+        </>
+      )}
+    </svg>
+  );
+}
+
 function LoginView() {
   const router = useRouter();
   const [authMode, setAuthMode] = useState<LoginMode>('password');
@@ -323,11 +353,20 @@ function SignUpView() {
     lastName: '',
     email: '',
     password: '',
-    confirmPassword: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const emailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim());
+  const formIsComplete =
+    formData.firstName.trim().length > 0 &&
+    formData.lastName.trim().length > 0 &&
+    emailIsValid &&
+    formData.password.length >= 8 &&
+    acceptedTerms;
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     setFormData((prev) => ({
@@ -342,13 +381,13 @@ function SignUpView() {
     setError(null);
     setSuccess(null);
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match.');
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters long.');
       return;
     }
 
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long.');
+    if (!acceptedTerms) {
+      setError('You must accept the Terms and Conditions and Privacy Policy to create an account.');
       return;
     }
 
@@ -358,7 +397,7 @@ function SignUpView() {
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, acceptedTerms }),
       });
 
       const data = await response.json();
@@ -448,39 +487,59 @@ function SignUpView() {
           <label htmlFor="password" className={`text-label-medium ${styles.label}`}>
             Password
           </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            autoComplete="new-password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Minimum 8 characters"
-            className={styles.input}
-          />
+          <div className={styles.passwordField}>
+            <input
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              required
+              minLength={8}
+              autoComplete="new-password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Minimum 8 characters"
+              className={`${styles.input} ${styles.passwordInput}`}
+            />
+            <button
+              type="button"
+              className={styles.passwordToggle}
+              onClick={() => setShowPassword((visible) => !visible)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-pressed={showPassword}
+            >
+              <EyeIcon hidden={showPassword} />
+            </button>
+          </div>
         </div>
 
-        <div className={styles.fieldGroup}>
-          <label htmlFor="confirmPassword" className={`text-label-medium ${styles.label}`}>
-            Confirm Password
-          </label>
+        <div className={styles.termsRow}>
           <input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
+            id="acceptTerms"
+            name="acceptTerms"
+            type="checkbox"
             required
-            autoComplete="new-password"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            placeholder="Repeat password"
-            className={styles.input}
+            checked={acceptedTerms}
+            onChange={(event) => {
+              setAcceptedTerms(event.target.checked);
+              setError(null);
+            }}
+            className={styles.checkbox}
           />
+          <label htmlFor="acceptTerms" className={`text-body-small ${styles.termsLabel}`}>
+            I accept the{' '}
+            <Link href="/terms" className={styles.textLink}>
+              Terms and Conditions
+            </Link>{' '}
+            and{' '}
+            <Link href="/privacy" className={styles.textLink}>
+              Privacy Policy
+            </Link>
+          </label>
         </div>
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !formIsComplete}
           className={`text-label-large ${styles.submitButton}`}
         >
           {loading ? 'Creating Account...' : 'Sign Up'}
