@@ -1,0 +1,24 @@
+# 15-form-attack-results.txt
+
+Form Validation Attack Audit
+Methodology: Manual edge-case injection to test client-side validation resilience.
+
+1. Test: Single-character names
+- Input: "A" for First Name, "B" for Last Name.
+- Result: BLOCKED. The minimum length validation rule successfully caught the input and prevented submission. 
+
+2. Test: Malformed email
+- Input: "a@b"
+- Result: BLOCKED. The email format regex successfully flagged this as an invalid domain structure and prevented submission.
+
+3. Test: Password of spaces
+- Input: "        " (Empty spaces meeting the minimum character count).
+- Result: BYPASSED. The password was accepted. The validation logic successfully counted the string length but failed to enforce `.trim()` or check for a lack of valid alphanumeric/special character density across the entire string, allowing a completely blank (but long) password to pass.
+
+4. Test: Trailing whitespace 
+- Input: Pasting a valid email or name with trailing whitespace at the end (e.g., "learner@example.com   ").
+- Result: BYPASSED. The form accepted the input with the whitespace included. The client-side logic is missing a `.trim()` method on the input values before running validation or payload submission, which could lead to database mismatch errors later.
+
+5. Test: Maximum length threshold
+- Input: Extremely long strings (thousands of characters) pasted into standard fields.
+- Result: BYPASSED. No maximum length attributes (`maxLength`) or validation rules were set on any of the form fields. The form currently only enforces minimum lengths, leaving the application vulnerable to submitting massive payloads that could potentially cause database truncation errors or performance overhead.

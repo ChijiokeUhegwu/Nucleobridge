@@ -1,0 +1,14 @@
+# password-and-button.md
+
+## Password Rules and Validation
+I set the minimum password length to 8 characters, combined with a requirement for at least one number and one special character. Eight characters is the baseline standard recommended by NIST for general-purpose applications. While length exponentially increases the keyspace against brute-force attacks, enforcing a number and special character protects against basic dictionary attacks (where users utilize single common words), ensuring sufficient entropy for an educational platform without overwhelming the user.
+
+To reduce cognitive load, the password hints are hidden by default and only appear once the user actually begins typing (`password.length > 0`), rather than just on field focus. This prevents the form from looking intimidating on initial load. Furthermore, I implemented a dynamic password strength meter (progress bar) and a real-time checklist. As the user types, the UI maps directly to the three conditions, providing immediate, granular visual feedback (transitioning from "Weak password" in red, to "Almost there" in orange, to "Strong password" in green).
+
+## Visibility Toggle vs. Confirm Field
+I chose a single visibility toggle (the eye icon) over a "Confirm Password" field. A visibility toggle drastically reduces input friction, saving the user from typing a complex string twice while still allowing them to visually verify their entry against typos. (During implementation, care was taken to ensure the conditional rendering logic strictly maintained only one absolute-positioned toggle icon, avoiding duplicate UI artifacts when typing). 
+
+However, a "Confirm Password" field would be the better choice in a stricter industry, such as banking or healthcare. In highly regulated environments, the cost of a user locking themselves out due to an unnoticed typo is severe, often requiring complex, friction-heavy identity verification to recover the account. Forcing the user to type it twice programmatically guarantees they know exactly what they typed, prioritizing absolute accuracy over speed.
+
+## The Submit Button: Disabled vs. Hidden
+I initially tested hiding the submit button entirely until the form was valid, but reverted to a visible, disabled button. The disabled version is better because hiding the primary call-to-action violates established user expectations. Users intuitively scan forms for the submit button to understand the completion path. A hidden button makes the interface look broken or incomplete, causing confusion. A visible but disabled button anchors the user, visually communicating that the form is functional but requires further input to proceed.
