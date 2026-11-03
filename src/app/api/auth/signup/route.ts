@@ -36,6 +36,20 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!/\d/.test(password)) {
+      return NextResponse.json(
+        { error: 'Password must contain at least one number.' },
+        { status: 400 }
+      );
+    }
+
+    if (!/[^A-Za-z0-9\s]/.test(password)) {
+      return NextResponse.json(
+        { error: 'Password must contain at least one special character (for example, @ or #).' },
+        { status: 400 }
+      );
+    }
+
     if (acceptedTerms !== true) {
       return NextResponse.json(
         { error: 'You must accept the Terms and Conditions and Privacy Policy.' },

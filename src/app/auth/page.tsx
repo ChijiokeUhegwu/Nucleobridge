@@ -18,8 +18,12 @@ const EMPTY_EMAIL_MESSAGE = 'This detail is missing. Please add your email addre
 const EMPTY_PASSWORD_MESSAGE = 'This detail is missing. Please enter your password.';
 const EMAIL_FORMAT_MESSAGE = 'Enter an email address like name@domain.com.';
 const PASSWORD_MIN_MESSAGE = 'Your password needs at least 8 characters.';
+const PASSWORD_NUMBER_MESSAGE = 'Your password needs at least one number.';
+const PASSWORD_SPECIAL_MESSAGE =
+  'Your password needs at least one special character (for example, @ or #).';
 const OTP_CODE_MESSAGE = 'Enter the security code from your email.';
 const TERMS_MESSAGE = 'Please accept the Terms and Privacy Policy to continue.';
+const TERMS_CLICK_MESSAGE = 'Please accept the Terms and Conditions to continue.';
 
 function isBlank(value: string) {
   return value.trim().length === 0;
@@ -45,12 +49,28 @@ function validateEmail(value: string) {
   return undefined;
 }
 
-function validatePassword(value: string) {
+function validateLoginPassword(value: string) {
   if (isBlank(value)) {
     return EMPTY_PASSWORD_MESSAGE;
   }
   if (value.length < 8) {
     return PASSWORD_MIN_MESSAGE;
+  }
+  return undefined;
+}
+
+function validateSignupPassword(value: string) {
+  if (isBlank(value)) {
+    return EMPTY_PASSWORD_MESSAGE;
+  }
+  if (value.length < 8) {
+    return PASSWORD_MIN_MESSAGE;
+  }
+  if (!/\d/.test(value)) {
+    return PASSWORD_NUMBER_MESSAGE;
+  }
+  if (!/[^A-Za-z0-9\s]/.test(value)) {
+    return PASSWORD_SPECIAL_MESSAGE;
   }
   return undefined;
 }
@@ -64,7 +84,7 @@ function validateSignupField(field: SignupField, value: string) {
     case 'email':
       return validateEmail(value);
     case 'password':
-      return validatePassword(value);
+      return validateSignupPassword(value);
   }
 }
 
@@ -174,11 +194,46 @@ function EyeIcon({ hidden }: { hidden: boolean }) {
   );
 }
 
+function RequirementIcon({ met }: { met: boolean }) {
+  if (met) {
+    return (
+      <svg
+        className={styles.requirementIconMet}
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg
+      className={styles.requirementIconUnmet}
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="12" cy="12" r="9" />
+    </svg>
+  );
+}
+
 function LoginView() {
   const router = useRouter();
   const [authMode, setAuthMode] = useState<LoginMode>('password');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [otpStep, setOtpStep] = useState<OtpStep>('request');
   const [otpCode, setOtpCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -191,6 +246,7 @@ function LoginView() {
     setAuthMode(mode);
     setError(null);
     setSuccess(null);
+    setShowPassword(false);
     setOtpStep('request');
     setOtpCode('');
     setFieldErrors({});
@@ -222,7 +278,7 @@ function LoginView() {
     setError(null);
     setFieldErrors((prev) => ({
       ...prev,
-      password: touched.password ? validatePassword(value) : undefined,
+      password: touched.password ? validateLoginPassword(value) : undefined,
     }));
   }
 
@@ -230,7 +286,7 @@ function LoginView() {
     setTouched((prev) => ({ ...prev, password: true }));
     setFieldErrors((prev) => ({
       ...prev,
-      password: validatePassword(event.target.value),
+      password: validateLoginPassword(event.target.value),
     }));
   }
 
@@ -256,7 +312,7 @@ function LoginView() {
 
     const nextErrors: LoginErrors = {
       email: validateEmail(email),
-      password: validatePassword(password),
+      password: validateLoginPassword(password),
     };
     setFieldErrors(nextErrors);
     setTouched({ email: true, password: true });
@@ -435,19 +491,32 @@ function LoginView() {
                 Forgot password?
               </Link>
             </div>
-            <input
-              id="loginPassword"
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={handleLoginPasswordChange}
-              onBlur={handleLoginPasswordBlur}
-              aria-invalid={Boolean(fieldErrors.password)}
-              aria-describedby={fieldErrors.password ? 'login-password-error' : undefined}
-              placeholder="Your password"
-              className={`${styles.input} ${fieldErrors.password ? styles.inputError : ''}`}
-            />
+            <div className={styles.passwordField}>
+              <input
+                id="loginPassword"
+                type={showPassword ? 'text' : 'password'}
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={handleLoginPasswordChange}
+                onBlur={handleLoginPasswordBlur}
+                aria-invalid={Boolean(fieldErrors.password)}
+                aria-describedby={fieldErrors.password ? 'login-password-error' : undefined}
+                placeholder="Your password"
+                className={`${styles.input} ${styles.passwordInput} ${
+                  fieldErrors.password ? styles.inputError : ''
+                }`}
+              />
+              <button
+                type="button"
+                className={styles.passwordToggle}
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
+              >
+                <EyeIcon hidden={showPassword} />
+              </button>
+            </div>
             <InlineError id="login-password-error" message={fieldErrors.password} />
           </div>
 
@@ -575,17 +644,40 @@ function SignUpView() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [termsClickError, setTermsClickError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<SignupErrors>({});
   const [touched, setTouched] = useState<Partial<Record<SignupField, boolean>>>({});
 
+  const passwordHintVisible = formData.password.length > 0;
+  const lengthValid = formData.password.length >= 8;
+  const specialValid = /[^A-Za-z0-9\s]/.test(formData.password);
+  const numberValid = /\d/.test(formData.password);
+  const passwordChecks = [
+    { key: 'length', label: 'At least 8 characters', met: lengthValid },
+    {
+      key: 'special',
+      label: 'Includes one special character e.g @',
+      met: specialValid,
+    },
+    { key: 'number', label: 'Includes a number', met: numberValid },
+  ];
+  const metPasswordConditions = [lengthValid, specialValid, numberValid].filter(
+    Boolean
+  ).length;
+  const passwordStrength =
+    metPasswordConditions === 3
+      ? { percent: 100, label: 'Strong password', toneClass: styles.strengthStrong }
+      : metPasswordConditions === 2
+        ? { percent: 66, label: 'Almost there', toneClass: styles.strengthAlmost }
+        : { percent: 33, label: 'Weak password', toneClass: styles.strengthWeak };
   const formIsComplete =
     formData.firstName.trim().length >= 2 &&
     formData.lastName.trim().length >= 2 &&
     EMAIL_PATTERN.test(formData.email.trim()) &&
-    formData.password.length >= 8 &&
+    validateSignupPassword(formData.password) === undefined &&
     acceptedTerms;
   const submitIsDisabled = loading || !formIsComplete;
 
@@ -625,6 +717,7 @@ function SignUpView() {
     const checked = event.target.checked;
     setAcceptedTerms(checked);
     setError(null);
+    setTermsClickError(null);
     setFieldErrors((prev) => ({ ...prev, terms: checked ? undefined : prev.terms }));
   }
 
@@ -632,6 +725,16 @@ function SignUpView() {
     if (!event.target.checked) {
       setFieldErrors((prev) => ({ ...prev, terms: TERMS_MESSAGE }));
     }
+  }
+
+  function handleSignupClick(event: React.MouseEvent<HTMLButtonElement>) {
+    if (!acceptedTerms) {
+      event.preventDefault();
+      setFieldErrors((prev) => ({ ...prev, terms: undefined }));
+      setTermsClickError(TERMS_CLICK_MESSAGE);
+      return;
+    }
+    setTermsClickError(null);
   }
 
   async function handleSubmit(event: React.FormEvent) {
@@ -646,7 +749,7 @@ function SignUpView() {
       firstName: validateName(formData.firstName, 'First name'),
       lastName: validateName(formData.lastName, 'Last name'),
       email: validateEmail(formData.email),
-      password: validatePassword(formData.password),
+      password: validateSignupPassword(formData.password),
       terms: acceptedTerms ? undefined : TERMS_MESSAGE,
     };
     setFieldErrors(nextErrors);
@@ -780,9 +883,11 @@ function SignUpView() {
               onChange={handleChange}
               onBlur={handleBlur}
               aria-invalid={Boolean(fieldErrors.password)}
-              aria-describedby={`signup-password-requirement${
-                fieldErrors.password ? ' signup-password-error' : ''
-              }`}
+              aria-describedby={
+                `${passwordHintVisible ? 'signup-password-requirement' : ''}${
+                  fieldErrors.password ? ' signup-password-error' : ''
+                }`.trim() || undefined
+              }
               placeholder="Your password"
               className={`${styles.input} ${styles.passwordInput} ${
                 fieldErrors.password ? styles.inputError : ''
@@ -798,12 +903,40 @@ function SignUpView() {
               <EyeIcon hidden={showPassword} />
             </button>
           </div>
-          <p
-            id="signup-password-requirement"
-            className={`text-body-small ${styles.subtleText}`}
-          >
-            Minimum 8 characters
-          </p>
+          {passwordHintVisible && (
+            <div
+              id="signup-password-requirement"
+              className={`${styles.strengthMeter} ${passwordStrength.toneClass}`}
+            >
+              <div className={styles.strengthHeader}>
+                <span className={`text-label-small ${styles.strengthLabel}`}>
+                  {passwordStrength.label}
+                </span>
+              </div>
+              <div
+                className={styles.strengthTrack}
+                role="progressbar"
+                aria-label="Password strength"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={passwordStrength.percent}
+                aria-valuetext={`${passwordStrength.label}. ${metPasswordConditions} of 3 requirements met.`}
+              >
+                <div
+                  className={styles.strengthFill}
+                  style={{ width: `${passwordStrength.percent}%` }}
+                />
+              </div>
+              <ul className={styles.requirementList}>
+                {passwordChecks.map((check) => (
+                  <li key={check.key} className={styles.requirementRow}>
+                    <RequirementIcon met={check.met} />
+                    <span className="text-body-small">{check.label}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <InlineError id="signup-password-error" message={fieldErrors.password} />
         </div>
 
@@ -836,9 +969,14 @@ function SignUpView() {
           <InlineError id="signup-terms-error" message={fieldErrors.terms} />
         </div>
 
+        {termsClickError && (
+          <InlineError id="signup-terms-click-error" message={termsClickError} />
+        )}
+
         <button
           type="submit"
           aria-disabled={submitIsDisabled}
+          onClick={handleSignupClick}
           className={`text-label-large ${styles.submitButton}`}
         >
           {loading ? 'Creating Account...' : 'Sign Up'}
