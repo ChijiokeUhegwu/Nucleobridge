@@ -1,0 +1,31 @@
+PS C:\Users\Chijioke Uhegwu\Desktop\Product Folder\Nucleobridge> npx prisma migrate dev --name init
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": PostgreSQL database "nucleobridge", schema "public" at "localhost:5432"
+
+PostgreSQL database nucleobridge created at localhost:5432
+
+Applying migration `20261030105045_init_auth`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20261030105045_init_auth/
+    └─ migration.sql
+
+Your database is now in sync with your schema.
+
+✔ Generated Prisma Client (v5.22.0) to .\node_modules\@prisma\client in 374ms
+
+
+┌─────────────────────────────────────────────────────────┐
+│  Update available 5.22.0 -> 8.0.0-rc.30                 │
+│                                                         │
+│  This is a major update - please follow the guide at    │
+│  https://pris.ly/d/major-version-upgrade                │
+│                                                         │
+│  Run the following to update                            │
+│    npm i --save-dev prisma@latest                       │
+│    npm i @prisma/client@latest                          │
+└─────────────────────────────────────────────────────────┘
+PS C:\Users\Chijioke Uhegwu\Desktop\Product Folder\Nucleobridge> 

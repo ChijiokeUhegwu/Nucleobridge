@@ -1,0 +1,45 @@
+Initial Steps:
+To capture the warning/error by trying to execute a migration on a table that already has existing records that lack this value in the field I made required, 
+I opened prisma/schema.prisma and added a new required column to my User model, in this case: phoneNumber String (no question mark).
+Then I ran npx prisma migrate dev --name add_phone_required and got an error documented in task-04-server-security\evidence\04-required-column-failure.txt
+
+STEP 1 (Make it Optional): 
+Changed the line in schema.prisma to phoneNumber String? (add the question mark).
+PS C:\Users\Chijioke Uhegwu\Desktop\Product Folder\Nucleobridge> npx prisma migrate dev --name add_phone_optional    
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": PostgreSQL database "nucleobridge", schema "public" at "localhost:5432"
+
+Applying migration `20261104165429_add_phone_optional`
+
+The following migration(s) have been created and applied from new schema changes:
+
+migrations/
+  └─ 20261104165429_add_phone_optional/
+    └─ migration.sql
+
+Your database is now in sync with your schema.
+
+✔ Generated Prisma Client (v5.22.0) to .\node_modules\@prisma\client in 363ms
+
+STEP 2 (Fill it):
+I opened Prisma studio by running npx prisma studio on the terminal and manually adding the phonenumber for each of the 4 existing records.
+
+STEP 3 (Make it Required: I changed the line in schema.prisma to phoneNumber String (no question mark)):
+
+PS C:\Users\Chijioke Uhegwu\Desktop\Product Folder\Nucleobridge> npx prisma migrate dev --name make_phone_required
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": PostgreSQL database "nucleobridge", schema "public" at "localhost:5432"
+
+Applying migration `20261104165933_make_phone_required`
+
+The following migration(s) have been created and applied from new schema changes:
+
+migrations/
+  └─ 20261104165933_make_phone_required/
+    └─ migration.sql
+
+Your database is now in sync with your schema.
+
+✔ Generated Prisma Client (v5.22.0) to .\node_modules\@prisma\client in 452ms

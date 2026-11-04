@@ -1,0 +1,29 @@
+C:\Users\Chijioke Uhegwu\Desktop\Product Folder\Nucleobridge> npm run dev
+
+> nucleobridge@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 6.9s
+ ○ Compiling /api/drift ...
+ ✓ Compiled /api/drift in 883ms (57 modules)
+DRIFT ERROR CAUGHT: 
+Invalid `prisma.user.create()` invocation:
+
+{
+  data: {
+    email: "drift-test@example.com",
+    firstName: "Drift",
+    lastName: "Test",
+    passwordHash: "dummyhash",
+    favoriteColor: "Blue",
++   phoneNumber: String
+  }
+}
+
+Argument `phoneNumber` is missing.
+ GET /api/drift 500 in 2209ms
