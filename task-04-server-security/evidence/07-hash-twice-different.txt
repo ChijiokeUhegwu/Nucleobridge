@@ -1,0 +1,5 @@
+--- Task 1: Hash the same password twice ---
+Hash 1:  $argon2id$v=19$m=65536,t=3,p=4$1qRZlU4mxny7tZ62xiMfnw$1ry2lqoYvv8j+ksT5G9po+CAPe8HthKLhgVRHEmW7OQ
+Hash 2:  $argon2id$v=19$m=65536,t=3,p=4$oXwTLLWxD1zxNCKLQTYUAA$MSILqM6ZsqCgzFWJOq4WKN9XcY5HF8kF+SnLMMPPv3w
+
+Why they differ: Argon2 automatically generates and embeds a unique, random salt for every single operation, meaning the exact same password will always yield a completely different hash string.

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyPassword } from '@/lib/auth';
+import { hashPassword, needsPasswordRehash, verifyPassword } from '@/lib/auth';
 import { SESSION_COOKIE_NAME, sessionCookieOptions } from '@/lib/session';
 
 export async function POST(request: Request) {
@@ -41,6 +41,21 @@ export async function POST(request: Request) {
         { error: 'Invalid email or password.' },
         { status: 401 }
       );
+    }
+
+    if (needsPasswordRehash(user.passwordHash)) {
+      try {
+        const passwordHash = await hashPassword(password);
+        await prisma.user.updateMany({
+          where: { id: user.id, passwordHash: user.passwordHash },
+          data: { passwordHash },
+        });
+      } catch (error) {
+        console.error(
+          'Password rehash error:',
+          error instanceof Error ? error.message : 'unknown error'
+        );
+      }
     }
 
     // Set standard 30-day session cookie

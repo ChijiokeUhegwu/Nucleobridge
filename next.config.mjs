@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  experimental: {
+    serverComponentsExternalPackages: ['@node-rs/argon2'],
+  },
   async redirects() {
     return [
       { source: '/login', destination: '/auth?view=login', permanent: false },

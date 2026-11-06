@@ -1,0 +1,48 @@
+TASK 2: ALGORITHM TIMINGS
+=========================
+
+Argon2id: 153.720 ms
+SHA-256:  0.892 ms
+
+
+TASK 3: GUESSES PER SECOND (ARITHMETIC)
+=======================================
+
+To calculate guesses per second, divide one second (1,000
+milliseconds) by the time required to compute one hash.
+
+1. Argon2id
+
+   Calculation:
+   1,000 ms / 153.720 ms = 6.505 guesses per second
+
+   Result: Approximately 7 guesses per second.
+
+
+2. SHA-256
+
+   Calculation:
+   1,000 ms / 0.892 ms = 1,121.076 guesses per second
+
+   Result: Approximately 1,121 guesses per second.
+
+   Note: SHA-256 is designed for speed. On a dedicated GPU
+   cracking rig, rather than a standard CPU running Node.js,
+   this performance can scale into the billions of guesses
+   per second.
+
+
+TASK 4: THE INVERSION PRINCIPLE
+===============================
+
+Adding an approximately 154-millisecond delay to a legitimate
+user's login is practically unnoticeable and costs the
+application very little.
+
+However, an attacker attempting millions or billions of
+guesses to crack a stolen password database must endure that
+same 154-millisecond delay for every single attempt.
+
+This significantly increases the computational cost of an
+attack, potentially turning an attack that would otherwise
+take hours into one that could take centuries.
