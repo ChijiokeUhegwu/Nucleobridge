@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { hashPassword, isPasswordBreached } from '@/lib/auth';
-import { sendWelcomeEmail } from '@/lib/mail';
+import { generateOtpCode, hashPassword, hashToken, isPasswordBreached } from '@/lib/auth';
+import { sendVerificationEmail } from '@/lib/mail';
 import { SESSION_COOKIE_NAME, sessionCookieOptions } from '@/lib/session';
 import { signupSchema, validationErrorResponse } from '@/lib/auth-validation';
 import { enforceRateLimit } from '@/lib/rate-limit';
@@ -73,6 +73,10 @@ export async function POST(request: Request) {
     }
 
     // Hash password and create record
+    const verificationCode = generateOtpCode();
+    const emailVerificationCodeHash = hashToken(verificationCode);
+    const emailVerificationExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
     const passwordHash = await hashPassword(cleanPassword);
     const user = await prisma.user.create({
       data: {
@@ -80,28 +84,28 @@ export async function POST(request: Request) {
         firstName: cleanFirstName,
         lastName: cleanLastName || null,
         passwordHash,
+        emailVerified: false,
+        emailVerificationCodeHash,
+        emailVerificationExpiresAt,
       },
       select: {
         id: true,
         email: true,
         firstName: true,
         lastName: true,
+        emailVerified: true,
         createdAt: true,
       },
     });
 
-    const welcomeEmailSent = await sendWelcomeEmail(
-      trimmedEmail,
-      cleanFirstName,
-      cleanLastName
-    );
-    if (!welcomeEmailSent) {
-      console.warn('Account created, but the welcome email could not be sent.');
-    }
+    void sendVerificationEmail(trimmedEmail, verificationCode).catch((error) => {
+      console.error('Verification email dispatch failed:', error);
+    });
 
     const response = NextResponse.json(
       {
-        message: 'Account created successfully. Welcome to NucleoBridge.',
+        message:
+          'Account created successfully. Please check your email for a verification code.',
         user,
       },
       { status: 201 }

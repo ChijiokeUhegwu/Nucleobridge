@@ -114,6 +114,10 @@ model User {
   passwordHash String?
   createdAt    DateTime  @default(now())
 
+  emailVerified              Boolean   @default(false)
+  emailVerificationCodeHash  String?
+  emailVerificationExpiresAt DateTime?
+
   progress            LearnerStepProgress[]
   snapshots           WorkspaceSnapshot[]
   attempts            CheckAttempt[]
