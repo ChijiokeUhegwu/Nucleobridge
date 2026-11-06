@@ -4,9 +4,15 @@ import { authHref } from '@/lib/auth-routes';
 import { generateResetToken, hashToken } from '@/lib/auth';
 import { sendPasswordResetEmail } from '@/lib/mail';
 import { forgotPasswordSchema, validationErrorResponse } from '@/lib/auth-validation';
+import { enforceRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   try {
+    const rateLimitResponse = enforceRateLimit(request);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const body = await request.json();
     const validation = forgotPasswordSchema.safeParse(body);
 

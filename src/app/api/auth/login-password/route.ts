@@ -3,9 +3,15 @@ import { prisma } from '@/lib/prisma';
 import { hashPassword, needsPasswordRehash, verifyPassword } from '@/lib/auth';
 import { SESSION_COOKIE_NAME, sessionCookieOptions } from '@/lib/session';
 import { loginSchema, validationErrorResponse } from '@/lib/auth-validation';
+import { enforceRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   try {
+    const rateLimitResponse = enforceRateLimit(request);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const body = await request.json();
     const validation = loginSchema.safeParse(body);
 

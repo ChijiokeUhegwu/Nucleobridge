@@ -4,9 +4,15 @@ import { hashPassword } from '@/lib/auth';
 import { sendWelcomeEmail } from '@/lib/mail';
 import { SESSION_COOKIE_NAME, sessionCookieOptions } from '@/lib/session';
 import { signupSchema, validationErrorResponse } from '@/lib/auth-validation';
+import { enforceRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   try {
+    const rateLimitResponse = enforceRateLimit(request);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const rawBody = await request.json();
     const body = rawBody && typeof rawBody === 'object' ? rawBody : {};
 
