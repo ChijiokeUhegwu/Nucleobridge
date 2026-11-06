@@ -2,27 +2,18 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateOtpCode, hashToken } from '@/lib/auth';
 import { sendOtpEmail } from '@/lib/mail';
+import { otpRequestSchema, validationErrorResponse } from '@/lib/auth-validation';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email } = body;
+    const validation = otpRequestSchema.safeParse(body);
 
-    if (!email) {
-      return NextResponse.json(
-        { error: 'Email is required to send a code.' },
-        { status: 400 }
-      );
+    if (!validation.success) {
+      return validationErrorResponse(validation.error);
     }
 
-    const trimmedEmail = String(email).trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      return NextResponse.json(
-        { error: 'Please enter a valid email address.' },
-        { status: 400 }
-      );
-    }
+    const { email: trimmedEmail } = validation.data;
 
     // Rate limiting: At most 3 codes per email per hour (PRD FR-A.2)
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);

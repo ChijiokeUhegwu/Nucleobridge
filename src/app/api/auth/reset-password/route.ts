@@ -1,36 +1,19 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword, hashToken } from '@/lib/auth';
+import { resetPasswordSchema, validationErrorResponse } from '@/lib/auth-validation';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { token, password, confirmPassword } = body;
-    const cleanPassword = String(password ?? '').trim();
-    const cleanConfirmPassword = String(confirmPassword ?? '').trim();
+    const validation = resetPasswordSchema.safeParse(body);
 
-    if (!token || !cleanPassword || !cleanConfirmPassword) {
-      return NextResponse.json(
-        { error: 'All fields are required.' },
-        { status: 400 }
-      );
+    if (!validation.success) {
+      return validationErrorResponse(validation.error);
     }
 
-    if (cleanPassword !== cleanConfirmPassword) {
-      return NextResponse.json(
-        { error: 'Passwords do not match.' },
-        { status: 400 }
-      );
-    }
-
-    if (cleanPassword.length < 8) {
-      return NextResponse.json(
-        { error: 'Password must be at least 8 characters long.' },
-        { status: 400 }
-      );
-    }
-
-    const tokenHash = hashToken(String(token).trim());
+    const { token, password: cleanPassword } = validation.data;
+    const tokenHash = hashToken(token);
 
     // Lookup token record
     const resetRecord = await prisma.passwordResetToken.findUnique({

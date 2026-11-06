@@ -1,0 +1,64 @@
+### 1. The Request
+
+```json
+{
+  "name": "A",
+  "email": "invalid-email-format",
+  "password": "",
+  "terms": false
+}
+```
+
+### 2. The Before Response
+
+Status: `400 Bad Request`
+
+```json
+{
+  "error": "All fields are required."
+}
+```
+
+The old manual validation returned one generic error and stopped without identifying the name, email, password, or terms failures.
+
+### 3. The After Response
+
+Status: `400 Bad Request`
+
+```json
+{
+  "error": "Validation failed.",
+  "issues": [
+    {
+      "field": "name",
+      "message": "Name must be at least 2 characters long."
+    },
+    {
+      "field": "email",
+      "message": "Please enter a valid email address."
+    },
+    {
+      "field": "password",
+      "message": "Password must be at least 8 characters long."
+    },
+    {
+      "field": "terms",
+      "message": "You must accept the Terms and Conditions and Privacy Policy."
+    }
+  ]
+}
+```
+
+### 4. Side-by-Side Summary
+
+| Check | Before | After |
+|---|---|---|
+| Status | `400 Bad Request` | `400 Bad Request` |
+| Name failure identified | No | Yes |
+| Email failure identified | No | Yes |
+| Password failure identified | No | Yes |
+| Terms failure identified | No | Yes |
+| Database logic reached | No | No |
+| Response shape | Single generic `error` | `error` plus Zod `issues` array |
+
+The Zod schema rejects the payload before the `SIGNUPS_ENABLED` check, the existing-user lookup, password hashing, or any `prisma` call. The response lists all four validation failures in one pass.

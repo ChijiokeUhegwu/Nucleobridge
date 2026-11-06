@@ -3,20 +3,18 @@ import { prisma } from '@/lib/prisma';
 import { authHref } from '@/lib/auth-routes';
 import { generateResetToken, hashToken } from '@/lib/auth';
 import { sendPasswordResetEmail } from '@/lib/mail';
+import { forgotPasswordSchema, validationErrorResponse } from '@/lib/auth-validation';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email } = body;
+    const validation = forgotPasswordSchema.safeParse(body);
 
-    if (!email) {
-      return NextResponse.json(
-        { error: 'Email address is required.' },
-        { status: 400 }
-      );
+    if (!validation.success) {
+      return validationErrorResponse(validation.error);
     }
 
-    const trimmedEmail = String(email).trim().toLowerCase();
+    const { email: trimmedEmail } = validation.data;
 
     const user = await prisma.user.findUnique({
       where: { email: trimmedEmail },

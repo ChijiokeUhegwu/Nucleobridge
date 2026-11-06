@@ -1,0 +1,8 @@
+Zod validation time: 9.9762 ms
+
+Warm in-request measurements: 0.2572 ms, 0.2692 ms, 0.3983 ms, 0.7557 ms, 0.8292 ms.
+
+Measurement note: The signup route currently uses manual checks, so a temporary equivalent Zod schema was added to src/app/api/auth/signup/route.ts and timed around safeParse(). The instrumentation and schema were removed after the test. The 9.9762 ms first request includes first-use initialization of Zod; subsequent warm requests were all below 1 ms.
+
+Why validation might take 2-3 seconds for others:
+Zod's synchronous parsing typically takes less than 5 milliseconds. A multi-second delay is almost always caused by either a serverless cold start (the function, database connection, or module initialization happening on the first request) or by improperly placing asynchronous database checks (such as an "email already exists" query) inside the validation schema instead of after it. Moving async database work outside the schema and keeping validation purely synchronous keeps this step in the sub-millisecond to low-millisecond range.

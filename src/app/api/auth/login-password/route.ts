@@ -2,21 +2,18 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword, needsPasswordRehash, verifyPassword } from '@/lib/auth';
 import { SESSION_COOKIE_NAME, sessionCookieOptions } from '@/lib/session';
+import { loginSchema, validationErrorResponse } from '@/lib/auth-validation';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const validation = loginSchema.safeParse(body);
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email and password are required.' },
-        { status: 400 }
-      );
+    if (!validation.success) {
+      return validationErrorResponse(validation.error);
     }
 
-    const trimmedEmail = String(email).trim().toLowerCase();
-    const cleanPassword = String(password).trim();
+    const { email: trimmedEmail, password: cleanPassword } = validation.data;
 
     const user = await prisma.user.findUnique({
       where: { email: trimmedEmail },

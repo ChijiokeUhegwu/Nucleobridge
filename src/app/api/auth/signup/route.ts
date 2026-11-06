@@ -3,60 +3,37 @@ import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth';
 import { sendWelcomeEmail } from '@/lib/mail';
 import { SESSION_COOKIE_NAME, sessionCookieOptions } from '@/lib/session';
+import { signupSchema, validationErrorResponse } from '@/lib/auth-validation';
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { firstName, lastName, email, password, acceptedTerms } = body;
+    const rawBody = await request.json();
+    const body = rawBody && typeof rawBody === 'object' ? rawBody : {};
 
-    const cleanFirstName = String(firstName ?? '').trim();
-    const cleanLastName = String(lastName ?? '').trim();
-    const cleanPassword = String(password ?? '').trim();
+    const suppliedName = typeof body.name === 'string' ? body.name : '';
+    const suppliedFirstName = typeof body.firstName === 'string' ? body.firstName : '';
+    const suppliedLastName = typeof body.lastName === 'string' ? body.lastName : '';
+    const combinedName =
+      suppliedName || [suppliedFirstName, suppliedLastName].filter(Boolean).join(' ').trim();
 
-    // Validation
-    if (!cleanFirstName || !cleanLastName || !email || !cleanPassword) {
-      return NextResponse.json(
-        { error: 'All fields are required.' },
-        { status: 400 }
-      );
+    const validation = signupSchema.safeParse({
+      name: combinedName,
+      firstName: body.firstName,
+      lastName: body.lastName,
+      email: body.email,
+      password: body.password,
+      terms: body.terms !== undefined ? body.terms : body.acceptedTerms,
+    });
+
+    if (!validation.success) {
+      return validationErrorResponse(validation.error);
     }
 
-    const trimmedEmail = String(email).trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      return NextResponse.json(
-        { error: 'Please enter a valid email address.' },
-        { status: 400 }
-      );
-    }
-
-    if (cleanPassword.length < 8) {
-      return NextResponse.json(
-        { error: 'Password must be at least 8 characters long.' },
-        { status: 400 }
-      );
-    }
-
-    if (!/\d/.test(cleanPassword)) {
-      return NextResponse.json(
-        { error: 'Password must contain at least one number.' },
-        { status: 400 }
-      );
-    }
-
-    if (!/[^A-Za-z0-9\s]/.test(cleanPassword)) {
-      return NextResponse.json(
-        { error: 'Password must contain at least one special character (for example, @ or #).' },
-        { status: 400 }
-      );
-    }
-
-    if (acceptedTerms !== true) {
-      return NextResponse.json(
-        { error: 'You must accept the Terms and Conditions and Privacy Policy.' },
-        { status: 400 }
-      );
-    }
+    const { name, firstName, lastName, email, password } = validation.data;
+    const cleanFirstName = (firstName ?? name).trim();
+    const cleanLastName = (lastName ?? '').trim();
+    const cleanPassword = password.trim();
+    const trimmedEmail = email.trim().toLowerCase();
 
     // Check emergency sign-ups switch
     if (process.env.SIGNUPS_ENABLED === 'false') {
@@ -84,7 +61,7 @@ export async function POST(request: Request) {
       data: {
         email: trimmedEmail,
         firstName: cleanFirstName,
-        lastName: cleanLastName,
+        lastName: cleanLastName || null,
         passwordHash,
       },
       select: {

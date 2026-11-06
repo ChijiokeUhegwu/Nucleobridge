@@ -2,21 +2,18 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashToken } from '@/lib/auth';
 import { SESSION_COOKIE_NAME, sessionCookieOptions } from '@/lib/session';
+import { otpVerifySchema, validationErrorResponse } from '@/lib/auth-validation';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, code } = body;
+    const validation = otpVerifySchema.safeParse(body);
 
-    if (!email || !code) {
-      return NextResponse.json(
-        { error: 'Email and security code are required.' },
-        { status: 400 }
-      );
+    if (!validation.success) {
+      return validationErrorResponse(validation.error);
     }
 
-    const trimmedEmail = String(email).trim().toLowerCase();
-    const cleanCode = String(code).trim();
+    const { email: trimmedEmail, code: cleanCode } = validation.data;
 
     // Find the latest active code for this email
     const loginCode = await prisma.loginCode.findFirst({
