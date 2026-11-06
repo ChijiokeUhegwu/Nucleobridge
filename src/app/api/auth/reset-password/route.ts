@@ -6,22 +6,24 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { token, password, confirmPassword } = body;
+    const cleanPassword = String(password ?? '').trim();
+    const cleanConfirmPassword = String(confirmPassword ?? '').trim();
 
-    if (!token || !password || !confirmPassword) {
+    if (!token || !cleanPassword || !cleanConfirmPassword) {
       return NextResponse.json(
         { error: 'All fields are required.' },
         { status: 400 }
       );
     }
 
-    if (password !== confirmPassword) {
+    if (cleanPassword !== cleanConfirmPassword) {
       return NextResponse.json(
         { error: 'Passwords do not match.' },
         { status: 400 }
       );
     }
 
-    if (password.length < 8) {
+    if (cleanPassword.length < 8) {
       return NextResponse.json(
         { error: 'Password must be at least 8 characters long.' },
         { status: 400 }
@@ -51,7 +53,7 @@ export async function POST(request: Request) {
     }
 
     // Hash new password and update user record
-    const newPasswordHash = await hashPassword(password);
+    const newPasswordHash = await hashPassword(cleanPassword);
 
     await prisma.$transaction([
       prisma.user.update({

@@ -11,9 +11,10 @@ export async function POST(request: Request) {
 
     const cleanFirstName = String(firstName ?? '').trim();
     const cleanLastName = String(lastName ?? '').trim();
+    const cleanPassword = String(password ?? '').trim();
 
     // Validation
-    if (!cleanFirstName || !cleanLastName || !email || !password) {
+    if (!cleanFirstName || !cleanLastName || !email || !cleanPassword) {
       return NextResponse.json(
         { error: 'All fields are required.' },
         { status: 400 }
@@ -29,21 +30,21 @@ export async function POST(request: Request) {
       );
     }
 
-    if (password.length < 8) {
+    if (cleanPassword.length < 8) {
       return NextResponse.json(
         { error: 'Password must be at least 8 characters long.' },
         { status: 400 }
       );
     }
 
-    if (!/\d/.test(password)) {
+    if (!/\d/.test(cleanPassword)) {
       return NextResponse.json(
         { error: 'Password must contain at least one number.' },
         { status: 400 }
       );
     }
 
-    if (!/[^A-Za-z0-9\s]/.test(password)) {
+    if (!/[^A-Za-z0-9\s]/.test(cleanPassword)) {
       return NextResponse.json(
         { error: 'Password must contain at least one special character (for example, @ or #).' },
         { status: 400 }
@@ -78,7 +79,7 @@ export async function POST(request: Request) {
     }
 
     // Hash password and create record
-    const passwordHash = await hashPassword(password);
+    const passwordHash = await hashPassword(cleanPassword);
     const user = await prisma.user.create({
       data: {
         email: trimmedEmail,

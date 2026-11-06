@@ -1,0 +1,2 @@
+Why trim but not lowercase?
+We trim passwords because leading or trailing spaces are almost always invisible, accidental artifacts from copying and pasting that cause frustrating login failures the user cannot diagnose. We do not lowercase passwords because capitalization is a deliberate, visible choice made by the user that significantly increases the complexity and security of their password.

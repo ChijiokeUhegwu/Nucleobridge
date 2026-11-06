@@ -16,6 +16,7 @@ export async function POST(request: Request) {
     }
 
     const trimmedEmail = String(email).trim().toLowerCase();
+    const cleanPassword = String(password).trim();
 
     const user = await prisma.user.findUnique({
       where: { email: trimmedEmail },
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const isMatch = await verifyPassword(password, user.passwordHash);
+    const isMatch = await verifyPassword(cleanPassword, user.passwordHash);
     if (!isMatch) {
       return NextResponse.json(
         { error: 'Invalid email or password.' },
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
 
     if (needsPasswordRehash(user.passwordHash)) {
       try {
-        const passwordHash = await hashPassword(password);
+        const passwordHash = await hashPassword(cleanPassword);
         await prisma.user.updateMany({
           where: { id: user.id, passwordHash: user.passwordHash },
           data: { passwordHash },

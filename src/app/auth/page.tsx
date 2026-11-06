@@ -29,6 +29,14 @@ function isBlank(value: string) {
   return value.trim().length === 0;
 }
 
+function normalizeEmail(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function trimPassword(value: string) {
+  return value.trim();
+}
+
 function validateName(value: string, label: string) {
   if (isBlank(value)) {
     return `This detail is missing. Please add your ${label.toLowerCase()}.`;
@@ -40,36 +48,39 @@ function validateName(value: string, label: string) {
 }
 
 function validateEmail(value: string) {
-  if (isBlank(value)) {
+  const normalizedEmail = normalizeEmail(value);
+  if (!normalizedEmail) {
     return EMPTY_EMAIL_MESSAGE;
   }
-  if (!EMAIL_PATTERN.test(value.trim())) {
+  if (!EMAIL_PATTERN.test(normalizedEmail)) {
     return EMAIL_FORMAT_MESSAGE;
   }
   return undefined;
 }
 
 function validateLoginPassword(value: string) {
-  if (isBlank(value)) {
+  const trimmedPassword = trimPassword(value);
+  if (!trimmedPassword) {
     return EMPTY_PASSWORD_MESSAGE;
   }
-  if (value.length < 8) {
+  if (trimmedPassword.length < 8) {
     return PASSWORD_MIN_MESSAGE;
   }
   return undefined;
 }
 
 function validateSignupPassword(value: string) {
-  if (isBlank(value)) {
+  const trimmedPassword = trimPassword(value);
+  if (!trimmedPassword) {
     return EMPTY_PASSWORD_MESSAGE;
   }
-  if (value.length < 8) {
+  if (trimmedPassword.length < 8) {
     return PASSWORD_MIN_MESSAGE;
   }
-  if (!/\d/.test(value)) {
+  if (!/\d/.test(trimmedPassword)) {
     return PASSWORD_NUMBER_MESSAGE;
   }
-  if (!/[^A-Za-z0-9\s]/.test(value)) {
+  if (!/[^A-Za-z0-9\s]/.test(trimmedPassword)) {
     return PASSWORD_SPECIAL_MESSAGE;
   }
   return undefined;
@@ -89,10 +100,11 @@ function validateSignupField(field: SignupField, value: string) {
 }
 
 function getSignupEmailChangeError(value: string, touched: boolean) {
-  if (isBlank(value)) {
+  const normalizedEmail = normalizeEmail(value);
+  if (!normalizedEmail) {
     return touched ? EMPTY_EMAIL_MESSAGE : undefined;
   }
-  return EMAIL_PATTERN.test(value.trim()) ? undefined : EMAIL_FORMAT_MESSAGE;
+  return EMAIL_PATTERN.test(normalizedEmail) ? undefined : EMAIL_FORMAT_MESSAGE;
 }
 
 function CautionIcon({ className = styles.fieldErrorIcon }: { className?: string }) {
@@ -260,9 +272,11 @@ function LoginView() {
   }
 
   function handleLoginEmailBlur(event: React.FocusEvent<HTMLInputElement>) {
+    const normalizedEmail = normalizeEmail(event.target.value);
+    setEmail(normalizedEmail);
     setTouched((prev) => ({ ...prev, email: true }));
     setFieldErrors((prev) => {
-      if (isBlank(event.target.value)) {
+      if (!normalizedEmail) {
         return { ...prev, email: EMPTY_EMAIL_MESSAGE };
       }
       if (prev.email === EMPTY_EMAIL_MESSAGE) {
@@ -283,10 +297,12 @@ function LoginView() {
   }
 
   function handleLoginPasswordBlur(event: React.FocusEvent<HTMLInputElement>) {
+    const trimmedPassword = trimPassword(event.target.value);
+    setPassword(trimmedPassword);
     setTouched((prev) => ({ ...prev, password: true }));
     setFieldErrors((prev) => ({
       ...prev,
-      password: validateLoginPassword(event.target.value),
+      password: validateLoginPassword(trimmedPassword),
     }));
   }
 
@@ -310,10 +326,14 @@ function LoginView() {
     setError(null);
     setSuccess(null);
 
+    const normalizedEmail = normalizeEmail(email);
+    const trimmedPassword = trimPassword(password);
     const nextErrors: LoginErrors = {
-      email: validateEmail(email),
-      password: validateLoginPassword(password),
+      email: validateEmail(normalizedEmail),
+      password: validateLoginPassword(trimmedPassword),
     };
+    setEmail(normalizedEmail);
+    setPassword(trimmedPassword);
     setFieldErrors(nextErrors);
     setTouched({ email: true, password: true });
 
@@ -327,7 +347,7 @@ function LoginView() {
       const response = await fetch('/api/auth/login-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: normalizedEmail, password: trimmedPassword }),
       });
 
       const data = await response.json();
@@ -352,7 +372,9 @@ function LoginView() {
     setError(null);
     setSuccess(null);
 
-    const emailError = validateEmail(email);
+    const normalizedEmail = normalizeEmail(email);
+    const emailError = validateEmail(normalizedEmail);
+    setEmail(normalizedEmail);
     setFieldErrors((prev) => ({ ...prev, email: emailError }));
     setTouched((prev) => ({ ...prev, email: true }));
 
@@ -366,7 +388,7 @@ function LoginView() {
       const response = await fetch('/api/auth/otp/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: normalizedEmail }),
       });
 
       const data = await response.json();
@@ -405,11 +427,12 @@ function LoginView() {
 
     try {
       const code = Number(otpCode);
+      const normalizedEmail = normalizeEmail(email);
 
       const response = await fetch('/api/auth/otp/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code }),
+        body: JSON.stringify({ email: normalizedEmail, code }),
       });
 
       const data = await response.json();
@@ -651,10 +674,11 @@ function SignUpView() {
   const [fieldErrors, setFieldErrors] = useState<SignupErrors>({});
   const [touched, setTouched] = useState<Partial<Record<SignupField, boolean>>>({});
 
-  const passwordHintVisible = formData.password.length > 0;
-  const lengthValid = formData.password.length >= 8;
-  const specialValid = /[^A-Za-z0-9\s]/.test(formData.password);
-  const numberValid = /\d/.test(formData.password);
+  const trimmedPassword = trimPassword(formData.password);
+  const passwordHintVisible = trimmedPassword.length > 0;
+  const lengthValid = trimmedPassword.length >= 8;
+  const specialValid = /[^A-Za-z0-9\s]/.test(trimmedPassword);
+  const numberValid = /\d/.test(trimmedPassword);
   const passwordChecks = [
     { key: 'length', label: 'At least 8 characters', met: lengthValid },
     {
@@ -676,8 +700,8 @@ function SignUpView() {
   const formIsComplete =
     formData.firstName.trim().length >= 2 &&
     formData.lastName.trim().length >= 2 &&
-    EMAIL_PATTERN.test(formData.email.trim()) &&
-    validateSignupPassword(formData.password) === undefined &&
+    EMAIL_PATTERN.test(normalizeEmail(formData.email)) &&
+    validateSignupPassword(trimmedPassword) === undefined &&
     acceptedTerms;
   const submitIsDisabled = loading || !formIsComplete;
 
@@ -707,6 +731,27 @@ function SignUpView() {
   function handleBlur(event: React.FocusEvent<HTMLInputElement>) {
     const field = event.target.name as SignupField;
     setTouched((prev) => ({ ...prev, [field]: true }));
+
+    if (field === 'email') {
+      const normalizedEmail = normalizeEmail(event.target.value);
+      setFormData((prev) => ({ ...prev, email: normalizedEmail }));
+      setFieldErrors((prev) => ({
+        ...prev,
+        email: validateEmail(normalizedEmail),
+      }));
+      return;
+    }
+
+    if (field === 'password') {
+      const nextPassword = trimPassword(event.target.value);
+      setFormData((prev) => ({ ...prev, password: nextPassword }));
+      setFieldErrors((prev) => ({
+        ...prev,
+        password: validateSignupPassword(nextPassword),
+      }));
+      return;
+    }
+
     setFieldErrors((prev) => ({
       ...prev,
       [field]: validateSignupField(field, event.target.value),
@@ -745,13 +790,20 @@ function SignUpView() {
     setError(null);
     setSuccess(null);
 
+    const normalizedEmail = normalizeEmail(formData.email);
+    const trimmedSignupPassword = trimPassword(formData.password);
     const nextErrors: SignupErrors = {
       firstName: validateName(formData.firstName, 'First name'),
       lastName: validateName(formData.lastName, 'Last name'),
-      email: validateEmail(formData.email),
-      password: validateSignupPassword(formData.password),
+      email: validateEmail(normalizedEmail),
+      password: validateSignupPassword(trimmedSignupPassword),
       terms: acceptedTerms ? undefined : TERMS_MESSAGE,
     };
+    setFormData((prev) => ({
+      ...prev,
+      email: normalizedEmail,
+      password: trimmedSignupPassword,
+    }));
     setFieldErrors(nextErrors);
     setTouched({ firstName: true, lastName: true, email: true, password: true });
 
@@ -765,7 +817,12 @@ function SignUpView() {
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, acceptedTerms }),
+        body: JSON.stringify({
+          ...formData,
+          email: normalizedEmail,
+          password: trimmedSignupPassword,
+          acceptedTerms,
+        }),
       });
 
       const data = await response.json();
@@ -1005,13 +1062,15 @@ function ForgotPasswordView() {
     event.preventDefault();
     setError(null);
     setSuccess(null);
+    const normalizedEmail = normalizeEmail(email);
+    setEmail(normalizedEmail);
     setLoading(true);
 
     try {
       const response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: normalizedEmail }),
       });
 
       const data = await response.json();
@@ -1055,6 +1114,7 @@ function ForgotPasswordView() {
             autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
+            onBlur={(event) => setEmail(normalizeEmail(event.target.value))}
             placeholder="learner@example.com"
             className={styles.input}
           />
@@ -1099,17 +1159,22 @@ function ResetPasswordView({ initialToken }: { initialToken: string }) {
     setError(null);
     setSuccess(null);
 
+    const trimmedPassword = trimPassword(password);
+    const trimmedConfirmPassword = trimPassword(confirmPassword);
+    setPassword(trimmedPassword);
+    setConfirmPassword(trimmedConfirmPassword);
+
     if (!token) {
       setError('Password reset token is missing. Please check your reset link.');
       return;
     }
 
-    if (password !== confirmPassword) {
+    if (trimmedPassword !== trimmedConfirmPassword) {
       setError('Passwords do not match.');
       return;
     }
 
-    if (password.length < 8) {
+    if (trimmedPassword.length < 8) {
       setError('Password must be at least 8 characters long.');
       return;
     }
@@ -1120,7 +1185,11 @@ function ResetPasswordView({ initialToken }: { initialToken: string }) {
       const response = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, password, confirmPassword }),
+        body: JSON.stringify({
+          token,
+          password: trimmedPassword,
+          confirmPassword: trimmedConfirmPassword,
+        }),
       });
 
       const data = await response.json();
@@ -1179,6 +1248,7 @@ function ResetPasswordView({ initialToken }: { initialToken: string }) {
             autoComplete="new-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
+            onBlur={(event) => setPassword(trimPassword(event.target.value))}
             placeholder="Minimum 8 characters"
             className={styles.input}
           />
@@ -1195,6 +1265,7 @@ function ResetPasswordView({ initialToken }: { initialToken: string }) {
             autoComplete="new-password"
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
+            onBlur={(event) => setConfirmPassword(trimPassword(event.target.value))}
             placeholder="Repeat new password"
             className={styles.input}
           />
