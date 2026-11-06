@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { hashPassword } from '@/lib/auth';
+import { hashPassword, isPasswordBreached } from '@/lib/auth';
 import { sendWelcomeEmail } from '@/lib/mail';
 import { SESSION_COOKIE_NAME, sessionCookieOptions } from '@/lib/session';
 import { signupSchema, validationErrorResponse } from '@/lib/auth-validation';
@@ -46,6 +46,17 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'New account sign-ups are currently paused for maintenance.' },
         { status: 403 }
+      );
+    }
+
+    const passwordBreached = await isPasswordBreached(cleanPassword);
+    if (passwordBreached) {
+      return NextResponse.json(
+        {
+          error:
+            'This password has been compromised in a known data breach. Please choose a safer password.',
+        },
+        { status: 400 }
       );
     }
 

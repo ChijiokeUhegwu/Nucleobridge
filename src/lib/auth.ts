@@ -14,6 +14,8 @@ const ARGON2_TIME_COST = 2;
 const ARGON2_PARALLELISM = 1;
 const ARGON2_OUTPUT_LEN = 32;
 
+const HIBP_RANGE_URL = 'https://api.pwnedpasswords.com/range/';
+
 const ARGON2ID_OPTIONS: Options = {
   algorithm: ARGON2ID_ALGORITHM,
   memoryCost: ARGON2_MEMORY_COST_KIB,
@@ -80,6 +82,40 @@ export function needsPasswordRehash(hash: string): boolean {
     );
   } catch {
     return true;
+  }
+}
+
+export async function isPasswordBreached(password: string): Promise<boolean> {
+  const sha1Hash = crypto.createHash('sha1').update(password).digest('hex').toUpperCase();
+  const prefix = sha1Hash.slice(0, 5);
+  const suffix = sha1Hash.slice(5);
+
+  try {
+    const response = await fetch(`${HIBP_RANGE_URL}${prefix}`, {
+      headers: {
+        'Add-Padding': 'true',
+        'User-Agent': 'NucleoBridge',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      console.warn(`HIBP range request failed with status ${response.status}.`);
+      return false;
+    }
+
+    const body = await response.text();
+
+    return body.split(/\r?\n/).some((line) => {
+      const [lineSuffix, count] = line.trim().split(':');
+      return lineSuffix?.toUpperCase() === suffix && Number(count) > 0;
+    });
+  } catch (error) {
+    console.warn(
+      'HIBP range request failed:',
+      error instanceof Error ? error.message : 'unknown error'
+    );
+    return false;
   }
 }
 
