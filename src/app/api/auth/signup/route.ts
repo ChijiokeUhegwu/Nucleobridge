@@ -6,6 +6,8 @@ import { SESSION_COOKIE_NAME, sessionCookieOptions } from '@/lib/session';
 import { signupSchema, validationErrorResponse } from '@/lib/auth-validation';
 import { enforceRateLimit } from '@/lib/rate-limit';
 
+const EMAIL_VERIFICATION_WINDOW_MS = 10 * 60 * 1000;
+
 export async function POST(request: Request) {
   try {
     const rateLimitResponse = enforceRateLimit(request);
@@ -75,7 +77,7 @@ export async function POST(request: Request) {
     // Hash password and create record
     const verificationCode = generateOtpCode();
     const emailVerificationCodeHash = hashToken(verificationCode);
-    const emailVerificationExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const emailVerificationExpiresAt = new Date(Date.now() + EMAIL_VERIFICATION_WINDOW_MS);
 
     const passwordHash = await hashPassword(cleanPassword);
     const user = await prisma.user.create({
@@ -94,6 +96,7 @@ export async function POST(request: Request) {
         firstName: true,
         lastName: true,
         emailVerified: true,
+        emailVerificationExpiresAt: true,
         createdAt: true,
       },
     });

@@ -1,0 +1,21 @@
+prisma:query COMMIT
+ POST /api/auth/signup 201 in 3199ms
+Failed to send verification email via Gmail SMTP: Error: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials ffacd0b85a97d-49485e7d135sm1187131f8f.7 - gsmtp
+    at SMTPConnection._formatError (webpack-internal:///(rsc)/./node_modules/nodemailer/dist/esm/smtp-connection/index.js:938:19)
+    at SMTPConnection._actionAUTHComplete (webpack-internal:///(rsc)/./node_modules/nodemailer/dist/esm/smtp-connection/index.js:1776:34)
+    at SMTPConnection.eval (webpack-internal:///(rsc)/./node_modules/nodemailer/dist/esm/smtp-connection/index.js:626:26)
+    at SMTPConnection._processResponse (webpack-internal:///(rsc)/./node_modules/nodemailer/dist/esm/smtp-connection/index.js:1163:20)
+    at SMTPConnection._onData (webpack-internal:///(rsc)/./node_modules/nodemailer/dist/esm/smtp-connection/index.js:883:14)
+    at SMTPConnection._onSocketData (webpack-internal:///(rsc)/./node_modules/nodemailer/dist/esm/smtp-connection/index.js:194:44)
+    at TLSSocket.emit (node:events:509:28)
+    at addChunk (node:internal/streams/readable:563:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+    at Readable.push (node:internal/streams/readable:394:5)
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:189:23) {
+  code: 'EAUTH',
+  response: '535-5.7.8 Username and Password not accepted. For more information, go to\n' +
+    '535 5.7.8  https://support.google.com/mail/?p=BadCredentials ffacd0b85a97d-49485e7d135sm1187131f8f.7 - gsmtp',
+  responseCode: 535,
+  permanent: true,
+  command: 'AUTH PLAIN'

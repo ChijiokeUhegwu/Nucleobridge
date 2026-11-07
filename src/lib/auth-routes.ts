@@ -1,8 +1,14 @@
-export type AuthView = 'login' | 'signup' | 'forgot-password' | 'reset-password';
+export type AuthView =
+  | 'login'
+  | 'signup'
+  | 'verify-email'
+  | 'forgot-password'
+  | 'reset-password';
 
 export const AUTH_VIEWS: readonly AuthView[] = [
   'login',
   'signup',
+  'verify-email',
   'forgot-password',
   'reset-password',
 ];

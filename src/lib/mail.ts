@@ -179,7 +179,9 @@ export async function sendPasswordResetEmail(
 }
 
 /**
- * Sends a welcome email after a learner creates an account.
+ * Sends a welcome email immediately after successful email verification.
+ * Contains personalized greeting, brief platform overview, and primary HTML action
+ * button linking to the dashboard to solve their first task.
  */
 export async function sendWelcomeEmail(
   email: string,
@@ -190,49 +192,60 @@ export async function sendWelcomeEmail(
   const from = process.env.EMAIL_FROM || 'NucleoBridge <noreply@nucleobridge.org>';
   const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
   const dashboardUrl = `${appUrl}/dashboard`;
-  const fullName = `${firstName} ${lastName}`.trim();
+
+  const cleanFirst = firstName ? firstName.trim() : '';
+  const cleanLast = lastName ? lastName.trim() : '';
+  const displayName = [cleanFirst, cleanLast].filter(Boolean).join(' ') || 'Learner';
 
   if (!transporter) {
     console.warn(
       `\n=======================================================\n` +
       `[MOCK EMAIL SERVICE] Gmail SMTP credentials not yet provided in .env.\n` +
       `To: ${email}\n` +
-      `Subject: Welcome to NucleoBridge\n` +
-      `Hello ${fullName},\n` +
-      `Your account is ready. Open your dashboard: ${dashboardUrl}\n` +
+      `Subject: Welcome to NucleoBridge — Start Your First Task\n` +
+      `Greeting: Hello ${displayName},\n` +
+      `Dashboard URL: ${dashboardUrl}\n` +
       `=======================================================\n`
     );
     return true;
   }
 
-  const safeName = escapeHtml(fullName);
+  const safeName = escapeHtml(displayName);
   const safeDashboardUrl = escapeHtml(dashboardUrl);
 
   try {
     await transporter.sendMail({
       from,
       to: email,
-      subject: 'Welcome to NucleoBridge',
+      subject: 'Welcome to NucleoBridge — Start Your First Task',
       text:
-        `Hello ${fullName},\n\n` +
-        `Welcome to NucleoBridge — your account is ready.\n\n` +
-        `Open your dashboard to explore the case study catalogue, run real bioinformatics tools in your browser, and keep your progress in one place.\n\n` +
-        `Open your dashboard: ${dashboardUrl}\n\n` +
-        `If you did not create this account, you can safely ignore this email.\n\n` +
-        `— The NucleoBridge team`,
+        `Hello ${displayName},\n\n` +
+        `Welcome to NucleoBridge!\n\n` +
+        `NucleoBridge is an interactive, browser-based bioinformatics learning platform. You can run real bioinformatics workflows (Python via Pyodide, R via WebR, and command line tools like samtools via Biowasm) directly inside your web browser with zero local installation or complex environment setup. Automated checks grade your work instantly, and a Socratic AI mentor provides guidance when you are stuck without giving away the final answers.\n\n` +
+        `Your email is verified and your account is ready. Jump into your dashboard and start solving your first case study task today:\n` +
+        `${dashboardUrl}\n\n` +
+        `— The NucleoBridge Team`,
       html: `
-        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 540px; margin: 0 auto; padding: 24px; border: 1px solid #d5e7dd; border-radius: 8px; background-color: #f3fbf6; color: #161d1a;">
-          <h2 style="color: #0f6e56; margin-top: 0;">Welcome to NucleoBridge</h2>
-          <p style="font-size: 15px; line-height: 1.5;">Hello ${safeName},</p>
-          <p style="font-size: 15px; line-height: 1.5;">Your account is ready. You can now open your dashboard to explore the case study catalogue, run real bioinformatics tools in your browser, and keep your progress in one place.</p>
-          <div style="margin: 24px 0; text-align: center;">
-            <a href="${safeDashboardUrl}" style="display: inline-block; font-size: 15px; font-weight: 600; text-decoration: none; padding: 12px 24px; background-color: #0f6e56; color: #ffffff; border-radius: 6px;">
-              Open Your Dashboard
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 580px; margin: 0 auto; padding: 28px; border: 1px solid #d5e7dd; border-radius: 12px; background-color: #f3fbf6; color: #161d1a;">
+          <h2 style="color: #0f6e56; margin-top: 0; font-size: 24px;">Welcome to NucleoBridge</h2>
+          <p style="font-size: 16px; line-height: 1.5; font-weight: 600; color: #161d1a;">Hello ${safeName},</p>
+          <p style="font-size: 15px; line-height: 1.6; color: #3a4a43;">
+            Welcome to <strong>NucleoBridge</strong> — your interactive, browser-based bioinformatics learning platform.
+          </p>
+          <p style="font-size: 14px; line-height: 1.6; color: #3a4a43;">
+            Run real computational biology tools (Python, R, and samtools) directly inside your browser with zero local setup. Automated checks evaluate your code instantly, while our Socratic AI mentor guides you through challenging concepts without revealing final answers.
+          </p>
+          <div style="margin: 28px 0; text-align: center;">
+            <a href="${safeDashboardUrl}" style="display: inline-block; font-size: 15px; font-weight: 600; text-decoration: none; padding: 14px 28px; background-color: #0f6e56; color: #ffffff; border-radius: 8px; box-shadow: 1.5px 6px 30px 0px rgba(15, 110, 86, 0.12);">
+              Solve Your First Task on Dashboard &rarr;
             </a>
           </div>
-          <p style="font-size: 13px; color: #51625a;">If the button does not work, copy this address into your browser:<br />${safeDashboardUrl}</p>
-          <p style="font-size: 13px; color: #51625a;">If you did not create this account, you can safely ignore this email.</p>
-          <p style="font-size: 13px; color: #51625a; margin-bottom: 0;">— The NucleoBridge team</p>
+          <p style="font-size: 13px; color: #51625a; line-height: 1.4;">
+            If the button above does not work, copy and paste this link into your browser:<br />
+            <a href="${safeDashboardUrl}" style="color: #0f6e56; word-break: break-all;">${safeDashboardUrl}</a>
+          </p>
+          <hr style="border: none; border-top: 1px solid #d5e7dd; margin: 24px 0;" />
+          <p style="font-size: 13px; color: #51625a; margin-bottom: 0;">— The NucleoBridge Team</p>
         </div>
       `,
     });

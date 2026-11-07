@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashToken } from '@/lib/auth';
 import { otpVerifySchema, validationErrorResponse } from '@/lib/auth-validation';
+import { sendWelcomeEmail } from '@/lib/mail';
 
 export async function POST(request: Request) {
   try {
@@ -18,6 +19,9 @@ export async function POST(request: Request) {
       where: { email: trimmedEmail },
       select: {
         id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
         emailVerified: true,
         emailVerificationCodeHash: true,
         emailVerificationExpiresAt: true,
@@ -68,9 +72,10 @@ export async function POST(request: Request) {
       },
       data: {
         emailVerified: true,
+        emailVerifiedAt: new Date(),
         emailVerificationCodeHash: null,
         emailVerificationExpiresAt: null,
-      },
+      } as Parameters<typeof prisma.user.updateMany>[0]['data'],
     });
 
     if (result.count === 0) {
@@ -79,6 +84,15 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    // Background delivery of welcome email — must NOT block HTTP response
+    void sendWelcomeEmail(
+      user.email,
+      user.firstName || '',
+      user.lastName || ''
+    ).catch((error) => {
+      console.error('Welcome email background dispatch failed:', error);
+    });
 
     return NextResponse.json({
       message: 'Email verified successfully.',

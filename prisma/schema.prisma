@@ -115,6 +115,7 @@ model User {
   createdAt    DateTime  @default(now())
 
   emailVerified              Boolean   @default(false)
+  emailVerifiedAt            DateTime?
   emailVerificationCodeHash  String?
   emailVerificationExpiresAt DateTime?
 

@@ -33,6 +33,27 @@ function normalizeEmail(value: string) {
   return value.trim().toLowerCase();
 }
 
+function concealEmail(value: string) {
+  const normalizedEmail = normalizeEmail(value);
+  const atIndex = normalizedEmail.lastIndexOf('@');
+
+  if (atIndex <= 0) {
+    return normalizedEmail;
+  }
+
+  const localPart = normalizedEmail.slice(0, atIndex);
+  const domain = normalizedEmail.slice(atIndex);
+
+  if (localPart.length <= 2) {
+    return `${localPart.slice(0, 1)}****${domain}`;
+  }
+
+  const visibleStart = localPart.length >= 10 ? 3 : 1;
+  const visibleEnd = localPart.length >= 10 ? 4 : 1;
+
+  return `${localPart.slice(0, visibleStart)}****${localPart.slice(-visibleEnd)}${domain}`;
+}
+
 function trimPassword(value: string) {
   return value.trim();
 }
@@ -831,9 +852,9 @@ function SignUpView() {
         throw new Error(data.error || 'Failed to create account.');
       }
 
-      setSuccess('Account created successfully! Taking you to your dashboard...');
+      setSuccess('Account created successfully! Please check your email for your verification code.');
       setTimeout(() => {
-        router.replace('/dashboard');
+        router.replace(authHref('verify-email', { email: normalizedEmail }));
       }, 1200);
     } catch (err: unknown) {
       setError(
@@ -1045,6 +1066,168 @@ function SignUpView() {
           Already have an account?{' '}
           <Link href={authHref('login')} className={styles.textLink}>
             Sign In
+          </Link>
+        </p>
+      </div>
+    </>
+  );
+}
+
+function VerifyEmailView({ initialEmail }: { initialEmail: string }) {
+  const router = useRouter();
+  const [email, setEmail] = useState(initialEmail);
+  const [code, setCode] = useState('');
+  const [codeError, setCodeError] = useState<string | undefined>(undefined);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    setEmail(initialEmail);
+  }, [initialEmail]);
+
+  function handleCodeChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const digitsOnly = event.target.value.replace(/\D/g, '').slice(0, 6);
+    setCode(digitsOnly);
+    setCodeError(undefined);
+    setError(null);
+  }
+
+  function handleCodeBlur() {
+    setCodeError(isBlank(code) ? OTP_CODE_MESSAGE : undefined);
+  }
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (loading) {
+      return;
+    }
+
+    setError(null);
+    setSuccess(null);
+
+    const normalizedEmail = normalizeEmail(email);
+    setEmail(normalizedEmail);
+
+    if (!normalizedEmail || !EMAIL_PATTERN.test(normalizedEmail)) {
+      setError(EMAIL_FORMAT_MESSAGE);
+      return;
+    }
+
+    if (code.length !== 6) {
+      setCodeError(OTP_CODE_MESSAGE);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail, code }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to verify your email.');
+      }
+
+      setSuccess('Email verified successfully! Redirecting to your dashboard...');
+      setTimeout(() => {
+        router.replace('/dashboard');
+      }, 1200);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <>
+      <h1 className={`text-headline-small ${styles.cardTitle}`}>Verify Your Email</h1>
+      <p className={`text-body-medium ${styles.cardSubtitle}`}>
+        {initialEmail ? (
+          <>
+            Enter the 6-digit code sent to <strong>{concealEmail(email)}</strong>.
+          </>
+        ) : (
+          'Enter the 6-digit code sent to your email address.'
+        )}
+      </p>
+
+      {error && <ErrorAlert message={error} />}
+      {success && <div className={styles.successAlert}>{success}</div>}
+
+      <form onSubmit={handleSubmit} className={styles.form} noValidate>
+        {!initialEmail && (
+          <div className={styles.fieldGroup}>
+            <label htmlFor="verifyEmail" className={`text-label-medium ${styles.label}`}>
+              Email Address
+            </label>
+            <input
+              id="verifyEmail"
+              type="email"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                setError(null);
+              }}
+              onBlur={(event) => setEmail(normalizeEmail(event.target.value))}
+              placeholder="learner@example.com"
+              className={styles.input}
+            />
+          </div>
+        )}
+
+        <div className={styles.fieldGroup}>
+          <label htmlFor="verificationCode" className={`text-label-medium ${styles.label}`}>
+            Verification Code
+          </label>
+          <input
+            id="verificationCode"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={6}
+            required
+            autoComplete="one-time-code"
+            value={code}
+            onChange={handleCodeChange}
+            onBlur={handleCodeBlur}
+            aria-invalid={Boolean(codeError)}
+            aria-describedby={codeError ? 'verify-email-code-error' : undefined}
+            className={`${styles.input} ${styles.inputOtp} ${
+              codeError ? styles.inputError : ''
+            }`}
+          />
+          <InlineError id="verify-email-code-error" message={codeError} />
+        </div>
+
+        <button
+          type="submit"
+          aria-disabled={loading || code.length !== 6}
+          className={`text-label-large ${styles.submitButton}`}
+        >
+          {loading ? 'Verifying Email...' : 'Verify Email'}
+        </button>
+      </form>
+
+      <div className={styles.footerLinks}>
+        <p className={`text-body-small ${styles.subtleText}`}>
+          Already verified?{' '}
+          <Link href={authHref('login')} className={styles.textLink}>
+            Sign In
+          </Link>
+        </p>
+        <p className={`text-body-small ${styles.subtleText}`}>
+          Used the wrong email?{' '}
+          <Link href={authHref('signup')} className={styles.textLink}>
+            Create a New Account
           </Link>
         </p>
       </div>
@@ -1296,11 +1479,13 @@ function AuthViews() {
   const requestedView = searchParams.get('view');
   const view: AuthView = isAuthView(requestedView) ? requestedView : 'login';
   const token = searchParams.get('token') ?? '';
+  const email = searchParams.get('email') ?? '';
 
   return (
     <AuthShell>
       {view === 'login' && <LoginView />}
       {view === 'signup' && <SignUpView />}
+      {view === 'verify-email' && <VerifyEmailView initialEmail={email} />}
       {view === 'forgot-password' && <ForgotPasswordView />}
       {view === 'reset-password' && <ResetPasswordView initialToken={token} />}
     </AuthShell>

@@ -1,0 +1,14 @@
+POST /api/auth/signup 201 in 2903ms
+prisma:query SELECT 1
+prisma:query SELECT "public"."User"."id", "public"."User"."emailVerified", "public"."User"."emailVerificationCodeHash", "public"."User"."emailVerificationExpiresAt" FROM "public"."User" WHERE ("public"."User"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query BEGIN
+prisma:query UPDATE "public"."User" SET "emailVerified" = $1, "emailVerificationCodeHash" = $2, "emailVerificationExpiresAt" = $3 WHERE ("public"."User"."id" = $4 AND "public"."User"."emailVerified" = $5 AND "public"."User"."emailVerificationCodeHash" = $6)
+prisma:query COMMIT
+ POST /api/auth/verify 200 in 66ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 1247ms (646 modules)
+ ✓ Compiled /api/auth/me in 356ms (397 modules)
+prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."firstName", "public"."User"."lastName", "public"."User"."createdAt" FROM "public"."User" WHERE "public"."User"."id" 
+IN ($1,$2) OFFSET $3
+ GET /api/auth/me 200 in 696ms
+ GET /api/auth/me 200 in 701ms
