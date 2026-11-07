@@ -15,8 +15,24 @@ export async function POST(request: Request) {
       return rateLimitResponse;
     }
 
-    const rawBody = await request.json();
-    const body = rawBody && typeof rawBody === 'object' ? rawBody : {};
+    let rawBody: unknown;
+    try {
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid or missing JSON request body.' },
+        { status: 400 }
+      );
+    }
+
+    if (!rawBody || typeof rawBody !== 'object' || Array.isArray(rawBody)) {
+      return NextResponse.json(
+        { error: 'Request body must be a valid JSON object.' },
+        { status: 400 }
+      );
+    }
+
+    const body = rawBody as Record<string, unknown>;
 
     const suppliedName = typeof body.name === 'string' ? body.name : '';
     const suppliedFirstName = typeof body.firstName === 'string' ? body.firstName : '';
