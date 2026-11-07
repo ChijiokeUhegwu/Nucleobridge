@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashToken } from '@/lib/auth';
-import { SESSION_COOKIE_NAME, sessionCookieOptions } from '@/lib/session';
+import { SESSION_COOKIE_NAME, sessionCookieOptions, createSession } from '@/lib/session';
 import { otpVerifySchema, validationErrorResponse } from '@/lib/auth-validation';
 
 export async function POST(request: Request) {
@@ -91,7 +91,9 @@ export async function POST(request: Request) {
       });
     }
 
-    // Set 30-day session cookie (PRD FR-A.3)
+    // Generate fresh session token and persist SHA-256 hash in PostgreSQL (PRD FR-A.3)
+    const sessionToken = await createSession(user.id);
+
     const response = NextResponse.json({
       message: 'Signed in successfully.',
       user: {
@@ -102,7 +104,7 @@ export async function POST(request: Request) {
       },
     });
 
-    response.cookies.set(SESSION_COOKIE_NAME, user.id, sessionCookieOptions);
+    response.cookies.set(SESSION_COOKIE_NAME, sessionToken, sessionCookieOptions);
 
     return response;
   } catch (error) {

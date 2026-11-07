@@ -1,0 +1,75 @@
+NUCLEOBRIDGE SESSION AUTHENTICATION EVIDENCE: FRESH IDENTIFIERS
+=============================================================================
+
+REQUIREMENT 1 & 2 VERIFICATION:
+1. A fresh token on every sign-in. Never a reused one. Log in twice and capture two different identifiers.
+2. The session record stored server-side, in your sessions table.
+3. The session cookie hashed using SHA-256 before database insertion.
+
+-----------------------------------------------------------------------------
+TEST EXECUTION DETAILS
+-----------------------------------------------------------------------------
+Timestamp:            2026-11-07T18:17:53.933Z
+Target Account:       verifyflow@nucleobridge.org
+User ID:              cmw684eda0008l9h9q4mhr3ed
+Endpoint:             POST http://localhost:3000/api/auth/login-password
+
+-----------------------------------------------------------------------------
+SIGN-IN ATTEMPT 1
+-----------------------------------------------------------------------------
+HTTP Response:        200 OK
+Raw Set-Cookie:       nb_session=e7ea0371d3223d175bd6ae172d2a4ffe93bb6407c000c5cf493f24176379bc2c; Path=/; Expires=Mon, 07 Dec 2026 18:17:52 GMT; Max-Age=2592000; HttpOnly; SameSite=lax
+Cookie Name:          nb_session
+Client Token 1:       e7ea0371d3223d175bd6ae172d2a4ffe93bb6407c000c5cf493f24176379bc2c
+Token 1 Entropy:      32 bytes (256 bits), 64 hexadecimal characters (CSPRNG)
+Computed SHA-256:     e9f8f13ee69e7836766b12619629dd6a489d7de261f4ca3fd7abdfe95aaed759
+
+Server-Side Database Record in PostgreSQL ("Session" table):
+  id:                 cmw6q7q8k0001pirc1kxixbwt
+  userId:             cmw684eda0008l9h9q4mhr3ed
+  tokenHash:          e9f8f13ee69e7836766b12619629dd6a489d7de261f4ca3fd7abdfe95aaed759
+  expiresAt:          2026-12-07T18:17:52.522Z (30-day TTL)
+  createdAt:          2026-11-07T18:17:52.526Z
+
+Hash Match Check:     MATCH (DB tokenHash === sha256(Client Token 1))
+
+
+-----------------------------------------------------------------------------
+SIGN-IN ATTEMPT 2 (1 SECOND LATER)
+-----------------------------------------------------------------------------
+HTTP Response:        200 OK
+Raw Set-Cookie:       nb_session=09956a5608596066164fbc6264eb4254bc09453debdf2bdf3f4ce6222ca6a8ba; Path=/; Expires=Mon, 07 Dec 2026 18:17:53 GMT; Max-Age=2592000; HttpOnly; SameSite=lax
+Cookie Name:          nb_session
+Client Token 2:       09956a5608596066164fbc6264eb4254bc09453debdf2bdf3f4ce6222ca6a8ba
+Token 2 Entropy:      32 bytes (256 bits), 64 hexadecimal characters (CSPRNG)
+Computed SHA-256:     df3b67f03c5035c2179320cca227a6740b81a36af21ae9ac224a3c721a86c0dc
+
+Server-Side Database Record in PostgreSQL ("Session" table):
+  id:                 cmw6q7rb20003pirczlvgwdp0
+  userId:             cmw684eda0008l9h9q4mhr3ed
+  tokenHash:          df3b67f03c5035c2179320cca227a6740b81a36af21ae9ac224a3c721a86c0dc
+  expiresAt:          2026-12-07T18:17:53.916Z (30-day TTL)
+  createdAt:          2026-11-07T18:17:53.919Z
+
+Hash Match Check:     MATCH (DB tokenHash === sha256(Client Token 2))
+
+
+-----------------------------------------------------------------------------
+CRYPTOGRAPHIC COMPARISON & AUDIT VERIFICATION
+-----------------------------------------------------------------------------
+Are Token 1 and Token 2 identical?  NO (Strictly unique, independent CSPRNG values)
+Token 1: e7ea0371d3223d175bd6ae172d2a4ffe93bb6407c000c5cf493f24176379bc2c
+Token 2: 09956a5608596066164fbc6264eb4254bc09453debdf2bdf3f4ce6222ca6a8ba
+Identity Check: (Token 1 === Token 2) => FALSE
+
+Cryptographic Randomness:
+Both tokens were generated via Node.js native crypto.randomBytes(32).toString('hex').
+At 256 bits of entropy, the collision probability is 1 in 2^256 (~1.15 x 10^77).
+No token is ever recycled, renewed, or inherited across logins.
+
+Hashed Cookie Verification:
+The plaintext tokens were transmitted to the browser in the Set-Cookie response header.
+The PostgreSQL "Session" table contains exclusively the one-way SHA-256 hash (tokenHash).
+In the event of an unauthenticated database dump or breach, an attacker possessing
+the tokenHash cannot reverse it to reconstruct the raw cookie value required for
+session hijacking.

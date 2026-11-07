@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword, needsPasswordRehash, verifyPassword } from '@/lib/auth';
-import { SESSION_COOKIE_NAME, sessionCookieOptions } from '@/lib/session';
+import { SESSION_COOKIE_NAME, sessionCookieOptions, createSession } from '@/lib/session';
 import { loginSchema, validationErrorResponse } from '@/lib/auth-validation';
 import { enforceRateLimit } from '@/lib/rate-limit';
 
@@ -62,7 +62,9 @@ export async function POST(request: Request) {
       }
     }
 
-    // Set standard 30-day session cookie
+    // Generate fresh session token and persist SHA-256 hash in PostgreSQL
+    const sessionToken = await createSession(user.id);
+
     const response = NextResponse.json({
       message: 'Signed in successfully.',
       user: {
@@ -73,7 +75,7 @@ export async function POST(request: Request) {
       },
     });
 
-    response.cookies.set(SESSION_COOKIE_NAME, user.id, sessionCookieOptions);
+    response.cookies.set(SESSION_COOKIE_NAME, sessionToken, sessionCookieOptions);
 
     return response;
   } catch (error) {
