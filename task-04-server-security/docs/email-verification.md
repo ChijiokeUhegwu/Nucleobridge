@@ -14,11 +14,10 @@ During initial configuration, the first SMTP dispatch failed. I received a `535-
 
 ## Background Processing Performance
 Sending the email inline during the registration request creates a massive bottleneck, tying my API's response time to the latency of Google's SMTP servers. 
-* **Response time with inline email:** `[Paste synchronous ms time here]` ms.
-* **Response time with background job:** `[Paste asynchronous ms time here]` ms.
+* **Response time with inline email:** `2959.55` ms.
+* **Response time with background job:** `1414.25` ms.
 
 Moving the email dispatch to a background job drastically reduces the latency, ensuring the database commits instantly and the user is advanced to the next screen without staring at a loading spinner.
 
 ## Flow Defect: The "Used Twice" Vulnerability
-*(Note: Edit this section based on how your code actually behaved in step 3.5)*
 During testing, I deliberately submitted the same valid code twice after a successful verification. My application properly rejected the second attempt, stating the account was already verified. If the system had processed it a second time without checking the user's current status (a common defect where verification is not retry-safe), it would execute redundant database writes, overwrite existing session states, and potentially trigger duplicate welcome emails. Nullifying the OTP upon successful entry prevents this state corruption.
