@@ -67,19 +67,51 @@ export default function DashboardPage() {
     setSigningOut(true);
     setSignOutError(null);
 
-    try {
-      const response = await fetch('/api/auth/signout', { method: 'POST' });
+    const MAX_RETRIES = 3;
+    const RETRY_DELAYS_MS = [0, 400, 800];
 
-      if (!response.ok) {
-        throw new Error('Could not sign out. Please try again.');
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      if (attempt > 0) {
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt]));
       }
 
-      window.location.assign('/');
-    } catch (error) {
-      setSignOutError(
-        error instanceof Error ? error.message : 'Could not sign out. Please try again.'
-      );
-      setSigningOut(false);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+      try {
+        const response = await fetch('/api/auth/signout', {
+          method: 'POST',
+          signal: controller.signal,
+          keepalive: true,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          // Success: session invalidated server-side & cookie cleared
+          window.location.assign('/');
+          return;
+        }
+
+        if (response.status < 500) {
+          const errorData = await response.json().catch(() => null);
+          throw new Error(errorData?.error || 'Could not sign out.');
+        }
+      } catch (error) {
+        clearTimeout(timeoutId);
+
+        // If this was the final attempt and network is completely unavailable:
+        if (attempt === MAX_RETRIES - 1) {
+          const isAbort = error instanceof Error && error.name === 'AbortError';
+          const errorMessage = isAbort
+            ? 'Sign out timed out after multiple automatic attempts. Your session is STILL ACTIVE on the server. If you are on a shared computer, please close all browser windows.'
+            : 'Network failure: Unable to reach the server to securely end your session after multiple automatic retries. Your session remains ACTIVE in the database. If you are on a shared computer, please close all browser windows.';
+          setSignOutError(errorMessage);
+          setSigningOut(false);
+          return;
+        }
+        // Transient network drop: continue to next automatic background retry
+      }
     }
   }
 
@@ -148,7 +180,24 @@ export default function DashboardPage() {
           </p>
         </section>
 
-        {signOutError && <div className={`text-body-small ${styles.errorBanner}`}>{signOutError}</div>}
+        {signOutError && (
+          <div className={styles.signOutErrorBanner} role="alert" aria-live="assertive">
+            <div className={`text-body-medium ${styles.signOutErrorTitle}`}>
+              <strong>Security Warning: Sign Out Failed</strong>
+            </div>
+            <p className={`text-body-small ${styles.signOutErrorText}`}>{signOutError}</p>
+            <div className={styles.signOutActions}>
+              <button
+                type="button"
+                className={`text-label-medium ${styles.signOutRetryButton}`}
+                onClick={handleSignOut}
+                disabled={signingOut}
+              >
+                {signingOut ? 'Retrying Sign Out...' : 'Retry Sign Out'}
+              </button>
+            </div>
+          </div>
+        )}
 
         <section aria-labelledby="catalog-heading">
           <div className={styles.sectionHeader}>

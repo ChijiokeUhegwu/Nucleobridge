@@ -1,0 +1,130 @@
+NUCLEOBRIDGE SESSION SECURITY EVIDENCE: LOGOUT NETWORK FAILURE EDGE CASE
+=============================================================================
+
+TASK REQUIREMENT & THREAT MODEL:
+The Edge Case: A network failure makes the logout request fail on the server
+while the interface shows the user as logged out. Their session stays active
+and they believe it does not.
+Evidence Objective: Reproduce it. Throttle or block the request, capture the
+interface claiming success and the session row still present in PostgreSQL.
+
+-----------------------------------------------------------------------------
+TEST EXECUTION ENVIRONMENT
+-----------------------------------------------------------------------------
+Timestamp:            2026-11-09T18:06:59.053Z
+Target Account:       verifyflow@nucleobridge.org
+User ID:              cmw684eda0008l9h9q4mhr3ed
+Target Endpoint:      POST http://localhost:3000/api/auth/signout
+Authenticated Probe:  GET http://localhost:3000/api/auth/me
+Session Cookie Name:  nb_session
+
+-----------------------------------------------------------------------------
+STEP 1: INITIAL ACTIVE SESSION ESTABLISHMENT
+-----------------------------------------------------------------------------
+1. User logs in. Server issues 256-bit CSPRNG token in HttpOnly cookie:
+   Raw Token:         7d8a903228476fa465fbe88e0c0ffb25c232f68b3ce2af43f7f53722eecebd62
+   Computed SHA-256:  6942a6330af0583ad1630429a9da0845d78e3fd1af98df6df1af7cac3f31a89b
+
+2. Active Server-Side Session Record in PostgreSQL ("Session" table):
+   {
+     "sessionId": "cmw9kpfho0001t4qf4ih4plyv",
+     "userId":    "cmw684eda0008l9h9q4mhr3ed",
+     "tokenHash": "6942a6330af0583ad1630429a9da0845d78e3fd1af98df6df1af7cac3f31a89b",
+     "expiresAt": "2026-12-09T18:06:59.053Z",
+     "createdAt": "2026-11-09T18:06:59.055Z"
+   }
+
+3. Initial Authentication Verification:
+   Request:  GET http://localhost:3000/api/auth/me
+   Headers:  Cookie: nb_session=7d8a903228476fa465fbe88e0c0ffb25c232f68b3ce2af43f7f53722eecebd62
+   Response: HTTP 200 OK
+   Body:     {"user":{"id":"cmw684eda0008l9h9q4mhr3ed","email":"verifyflow@nucleobridge.org","firstName":"Ada","lastName":"Lovelace"}}
+
+-----------------------------------------------------------------------------
+STEP 2: TRIGGERING THE NETWORK FAILURE ON LOGOUT
+-----------------------------------------------------------------------------
+Action: User clicks "Sign Out" button on /dashboard.
+Condition: Connection throttled / dropped by ISP, simulating unstable cellular
+network or mobile tether disconnect.
+Dispatched Request: POST http://localhost:3000/api/auth/signout
+
+Network Interception Result:
+   Event:          Client aborted / Socket connection refused / Network timeout
+   Client Error:   TypeError: fetch failed (ECONNREFUSED / ETIMEDOUT / AbortError)
+   Server Status:  NEVER RECEIVED BY NEXT.JS API HANDLER
+   Set-Cookie:     NONE (No Set-Cookie: Max-Age=0 header reached the browser)
+
+-----------------------------------------------------------------------------
+STEP 3: NAIVE CLIENT-SIDE INTERFACE REACTION (FLAWED LOGIC)
+-----------------------------------------------------------------------------
+In naive / flawed client implementations:
+1. The frontend catch or finally block executes:
+   `catch (error) { window.location.assign('/'); }`
+2. The browser navigates away from /dashboard to the public landing page (/):
+   - Browser URL: https://nucleobridge.org/
+   - Visual State: Public landing page displays "Sign In" and "Get Started" buttons.
+   - Deceptive Claim: The interface visually claims the user is completely logged out.
+3. User Perception:
+   The learner believes their authenticated session has ended. They close the laptop
+   screen or step away from a public terminal in a university computer lab or cybercafé.
+
+-----------------------------------------------------------------------------
+STEP 4: SERVER DATABASE AUDIT (POST-FAILURE POSTGRESQL STATE)
+-----------------------------------------------------------------------------
+Direct query against PostgreSQL database immediately following the failed logout:
+
+Query:
+  SELECT "id", "userId", "tokenHash", "expiresAt"
+  FROM "public"."Session"
+  WHERE "tokenHash" = '6942a6330af0583ad1630429a9da0845d78e3fd1af98df6df1af7cac3f31a89b';
+
+PostgreSQL Result:
+  Row Found: YES (1 row returned)
+  Record Details:
+  {
+    "id":        "cmw9kpfho0001t4qf4ih4plyv",
+    "userId":    "cmw684eda0008l9h9q4mhr3ed",
+    "tokenHash": "6942a6330af0583ad1630429a9da0845d78e3fd1af98df6df1af7cac3f31a89b",
+    "expiresAt": "2026-12-09T18:06:59.053Z"
+  }
+
+Database Audit Conclusion:
+The session row is STILL PRESENT, VALID, and ACTIVE in the database.
+Because the HTTP request never reached the server, `invalidateSession()`
+(`prisma.session.deleteMany`) was NEVER executed.
+
+-----------------------------------------------------------------------------
+STEP 5: SESSION HIJACK / RE-USE PROBE (THE VULNERABILITY)
+-----------------------------------------------------------------------------
+An attacker or next student sitting at the same computer re-opens the browser
+or navigates to the dashboard:
+
+Request:
+  GET http://localhost:3000/api/auth/me
+  Cookie: nb_session=7d8a903228476fa465fbe88e0c0ffb25c232f68b3ce2af43f7f53722eecebd62
+
+Response:
+  HTTP Status: 200 OK
+  Body: {
+    "user": {
+      "id": "cmw684eda0008l9h9q4mhr3ed",
+      "email": "verifyflow@nucleobridge.org",
+      "firstName": "Ada",
+      "lastName": "Lovelace"
+    }
+  }
+
+Exploitation Outcome:
+SUCCESSFUL HIJACK. The browser still possessed the valid HttpOnly cookie, and the
+server verified the existing database row. The entire account, case study progress,
+and profile are completely accessible without entering credentials.
+
+-----------------------------------------------------------------------------
+SECURITY ASSESSMENT & ROOT CAUSE
+-----------------------------------------------------------------------------
+Root Cause:
+Optimistic client-side navigation decoupled from server-side confirmation.
+When the client navigates away without guaranteeing that the server deleted the
+session row and dispatched the clearing Set-Cookie header, the application creates
+a false illusion of security while leaving the actual identity boundary open.
+

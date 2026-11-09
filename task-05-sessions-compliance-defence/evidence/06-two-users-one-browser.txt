@@ -1,0 +1,17 @@
+ POST /api/auth/verify 200 in 1804ms
+ ✓ Compiled /api/auth/me in 478ms (462 modules)
+prisma:query SELECT "public"."Session"."id", "public"."Session"."userId", "public"."Session"."tokenHash", "public"."Session"."expiresAt", "public"."Session"."createdAt" FROM "public"."Session" WHERE "public"."Session"."tokenHash" IN ($1,$2) OFFSET $3      
+prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."firstName", "public"."User"."lastName", "public"."User"."createdAt" FROM "public"."User" WHERE "public"."User"."id" IN ($1) OFFSET $2
+ GET /api/auth/me 200 in 1004ms
+ GET /api/auth/me 200 in 1016ms
+ GET / 200 in 1051ms
+ GET /auth?view=signup 200 in 573ms
+ ✓ Compiled /api/auth/login-password in 447ms (462 modules)
+prisma:query SELECT 1
+prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."firstName", "public"."User"."lastName", "public"."User"."passwordHash" FROM "public"."User" WHERE ("public"."User"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query INSERT INTO "public"."Session" ("id","userId","tokenHash","expiresAt","createdAt") VALUES ($1,$2,$3,$4,$5) RETURNING "public"."Session"."id", "public"."Session"."userId", "public"."Session"."tokenHash", "public"."Session"."expiresAt", "public"."Session"."createdAt"
+ POST /api/auth/login-password 200 in 1403ms
+prisma:query SELECT "public"."Session"."id", "public"."Session"."userId", "public"."Session"."tokenHash", "public"."Session"."expiresAt", "public"."Session"."createdAt" FROM "public"."Session" WHERE "public"."Session"."tokenHash" IN ($1,$2) OFFSET $3      
+prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."firstName", "public"."User"."lastName", "public"."User"."createdAt" FROM "public"."User" WHERE "public"."User"."id" IN ($1) OFFSET $2
+ GET /api/auth/me 200 in 185ms
+ GET /api/auth/me 200 in 217ms
