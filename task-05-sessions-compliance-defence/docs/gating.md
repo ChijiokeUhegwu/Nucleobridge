@@ -111,4 +111,3 @@ While the Hybrid Model is optimal for NucleoBridge's current operational scale, 
 ### 4. B2B Corporate Enterprise Contracts & SOC 2 Compliance
 * **Trigger Condition:** When signing multi-seat organizational contracts with pharmaceutical, biotech, or diagnostic laboratories.
 * **Contractual Mandate:** Enterprise IT security questionnaires and SOC 2 Type II access-control controls frequently mandate that registration cannot establish an ambient authenticated session; every newly verified identity must pass through the formal enterprise authentication gate.
-
