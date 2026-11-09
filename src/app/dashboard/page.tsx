@@ -12,6 +12,7 @@ type SessionUser = {
   email: string;
   firstName: string | null;
   lastName: string | null;
+  emailVerified?: boolean | null;
 };
 
 export default function DashboardPage() {
@@ -139,6 +140,20 @@ export default function DashboardPage() {
       </header>
 
       <main className={styles.main}>
+        {user && user.emailVerified === false && (
+          <div className={styles.verifyBanner}>
+            <span className="text-body-medium">
+              Your email is not verified yet. We sent a verification code to <strong>{user.email}</strong>.
+            </span>
+            <Link
+              href={authHref('verify-email', { email: user.email })}
+              className={`text-label-medium ${styles.verifyBannerLink}`}
+            >
+              Verify Email
+            </Link>
+          </div>
+        )}
+
         <section className={styles.welcomePanel}>
           <p className={`text-label-medium ${styles.eyebrow}`}>Your learning space</p>
           <h1 className={`text-headline-large ${styles.greeting}`}>Hello {displayName},</h1>

@@ -852,10 +852,10 @@ function SignUpView() {
         throw new Error(data.error || 'Failed to create account.');
       }
 
-      setSuccess('Account created successfully! Please check your email for your verification code.');
+      setSuccess('Account created successfully! Taking you to your dashboard...');
       setTimeout(() => {
-        router.replace(authHref('verify-email', { email: normalizedEmail }));
-      }, 1200);
+        router.replace('/dashboard');
+      }, 1000);
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : 'An unexpected error occurred. Please try again.'

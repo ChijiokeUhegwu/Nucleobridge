@@ -328,6 +328,37 @@
   box-shadow: var(--shadow-medium);
 }
 
+.verifyBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 20px;
+  margin-bottom: 24px;
+  background-color: var(--color-surface-container);
+  border: 1px solid var(--color-outline-variant);
+  border-left: 4px solid var(--color-primary);
+  border-radius: 8px;
+  color: var(--color-on-surface);
+}
+
+.verifyBannerLink {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.verifyBannerLink:hover {
+  opacity: 0.9;
+}
+
 /* Small screens */
 @media (max-width: 820px) {
   .main {
