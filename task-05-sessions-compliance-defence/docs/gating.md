@@ -108,3 +108,4 @@ NucleoBridge would immediately transition from Soft Gating to Hard Gating if any
 ### 4. B2B Enterprise Multi-Seat Licensing
 * **Trigger Condition:** When rolling out organizational team subscriptions where pharmaceutical or biotechnology companies purchase enterprise seats for employee training.
 * **Contractual Mandate:** Enterprise IT security agreements and SOC 2 Type II compliance frameworks mandate verified business domain authentication (`@company.com`) to prevent unauthorized corporate domain squatting.
+

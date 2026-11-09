@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateOtpCode, hashPassword, hashToken, isPasswordBreached } from '@/lib/auth';
 import { sendVerificationEmail } from '@/lib/mail';
-import { SESSION_COOKIE_NAME, sessionCookieOptions, createSession } from '@/lib/session';
 import { signupSchema, validationErrorResponse } from '@/lib/auth-validation';
 import { enforceRateLimit } from '@/lib/rate-limit';
 
@@ -121,9 +120,9 @@ export async function POST(request: Request) {
       console.error('Verification email dispatch failed:', error);
     });
 
-    const sessionToken = await createSession(user.id);
-
-    const response = NextResponse.json(
+    // Hard Gating: Do NOT issue a session cookie upon registration.
+    // The user is stopped at the email verification screen and must manually log in afterward.
+    return NextResponse.json(
       {
         message:
           'Account created successfully. Please check your email for a verification code.',
@@ -131,10 +130,6 @@ export async function POST(request: Request) {
       },
       { status: 201 }
     );
-
-    response.cookies.set(SESSION_COOKIE_NAME, sessionToken, sessionCookieOptions);
-
-    return response;
   } catch (error) {
     console.error('Sign up error:', error);
     return NextResponse.json(
