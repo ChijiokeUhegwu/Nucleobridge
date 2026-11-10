@@ -2,7 +2,11 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateOtpCode, hashPassword, hashToken, isPasswordBreached } from '@/lib/auth';
 import { sendVerificationEmail } from '@/lib/mail';
-import { SESSION_COOKIE_NAME, sessionCookieOptions, createSession } from '@/lib/session';
+import {
+  createSession,
+  invalidateExistingSession,
+  setSessionCookie,
+} from '@/lib/session';
 import { signupSchema, validationErrorResponse } from '@/lib/auth-validation';
 import { enforceRateLimit } from '@/lib/rate-limit';
 
@@ -121,6 +125,9 @@ export async function POST(request: Request) {
       console.error('Verification email dispatch failed:', error);
     });
 
+    // Invalidate and delete any existing active session(s) sent by this browser in PostgreSQL
+    await invalidateExistingSession(request);
+
     const sessionToken = await createSession(user.id);
 
     const response = NextResponse.json(
@@ -132,7 +139,7 @@ export async function POST(request: Request) {
       { status: 201 }
     );
 
-    response.cookies.set(SESSION_COOKIE_NAME, sessionToken, sessionCookieOptions);
+    setSessionCookie(response, sessionToken);
 
     return response;
   } catch (error) {

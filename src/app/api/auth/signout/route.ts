@@ -1,18 +1,30 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { SESSION_COOKIE_NAME, sessionCookieOptions, invalidateSession } from '@/lib/session';
+import {
+  SESSION_COOKIE_NAME,
+  sessionCookieOptions,
+  invalidateExistingSession,
+} from '@/lib/session';
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
-    const rawToken = cookies().get(SESSION_COOKIE_NAME)?.value;
-    if (rawToken) {
-      await invalidateSession(rawToken);
-    }
+    await invalidateExistingSession(request);
 
     const response = NextResponse.json({ message: 'Signed out successfully.' });
 
+    // Clear root and any potential subpath cookies
     response.cookies.set(SESSION_COOKIE_NAME, '', {
       ...sessionCookieOptions,
+      path: '/api/auth',
+      maxAge: 0,
+    });
+    response.cookies.set(SESSION_COOKIE_NAME, '', {
+      ...sessionCookieOptions,
+      path: '/auth',
+      maxAge: 0,
+    });
+    response.cookies.set(SESSION_COOKIE_NAME, '', {
+      ...sessionCookieOptions,
+      path: '/',
       maxAge: 0,
     });
 

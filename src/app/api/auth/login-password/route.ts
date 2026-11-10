@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword, needsPasswordRehash, verifyPassword } from '@/lib/auth';
-import { SESSION_COOKIE_NAME, sessionCookieOptions, createSession } from '@/lib/session';
+import {
+  createSession,
+  invalidateExistingSession,
+  setSessionCookie,
+} from '@/lib/session';
 import { loginSchema, validationErrorResponse } from '@/lib/auth-validation';
 import { enforceRateLimit } from '@/lib/rate-limit';
 
@@ -62,6 +66,9 @@ export async function POST(request: Request) {
       }
     }
 
+    // 1 & 2. Extract existing session cookie & delete from Prisma Session table
+    await invalidateExistingSession(request);
+
     // Generate fresh session token and persist SHA-256 hash in PostgreSQL
     const sessionToken = await createSession(user.id);
 
@@ -75,7 +82,9 @@ export async function POST(request: Request) {
       },
     });
 
-    response.cookies.set(SESSION_COOKIE_NAME, sessionToken, sessionCookieOptions);
+    // 3. Strict Cookie Overwrite: Ensure name, path ('/'), secure, and sameSite
+    // attributes are identical to force the browser to overwrite the existing entry
+    setSessionCookie(response, sessionToken);
 
     return response;
   } catch (error) {

@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { cookies } from 'next/headers';
+import type { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashToken } from '@/lib/auth';
 
@@ -13,6 +14,76 @@ export const sessionCookieOptions = {
   maxAge: SESSION_MAX_AGE_SECONDS,
   path: '/',
 };
+
+/**
+ * Sets the session cookie on a NextResponse with strict 1-to-1 replacement attributes.
+ * Guarantees exact same name, path ('/'), sameSite ('lax'), secure, and httpOnly flags
+ * to overwrite existing browser cookie jar entries rather than creating duplicates.
+ */
+export function setSessionCookie(response: NextResponse, sessionToken: string): void {
+  // Clear any potential subpath duplicates that may have stacked in the browser
+  response.cookies.set(SESSION_COOKIE_NAME, '', {
+    ...sessionCookieOptions,
+    path: '/api/auth',
+    maxAge: 0,
+  });
+  response.cookies.set(SESSION_COOKIE_NAME, '', {
+    ...sessionCookieOptions,
+    path: '/auth',
+    maxAge: 0,
+  });
+
+  // Strictly overwrite the root cookie
+  response.cookies.set(SESSION_COOKIE_NAME, sessionToken, sessionCookieOptions);
+}
+
+/**
+ * Extracts all session tokens from incoming cookies() store and raw Request Cookie header.
+ */
+export function extractSessionTokens(request?: Request): string[] {
+  const tokens: string[] = [];
+
+  try {
+    const store = cookies();
+    const list = store.getAll(SESSION_COOKIE_NAME);
+    for (const c of list) {
+      if (c?.value && !tokens.includes(c.value)) {
+        tokens.push(c.value);
+      }
+    }
+  } catch {
+    // cookies() unavailable outside Next.js request context
+  }
+
+  if (request) {
+    const raw = request.headers.get('cookie') || '';
+    if (raw.includes(SESSION_COOKIE_NAME)) {
+      const parts = raw.split(';');
+      for (const part of parts) {
+        const [k, ...v] = part.trim().split('=');
+        if (k === SESSION_COOKIE_NAME) {
+          const val = v.join('=');
+          if (val && !tokens.includes(val)) {
+            tokens.push(val);
+          }
+        }
+      }
+    }
+  }
+
+  return tokens;
+}
+
+/**
+ * Reads the incoming request for existing session tokens and invalidates each
+ * corresponding record from the PostgreSQL Prisma Session table.
+ */
+export async function invalidateExistingSession(request?: Request): Promise<void> {
+  const tokens = extractSessionTokens(request);
+  for (const token of tokens) {
+    await invalidateSession(token);
+  }
+}
 
 /**
  * Generates a high-entropy random session token (32 bytes = 256 bits of entropy)
@@ -62,42 +133,50 @@ export async function invalidateSession(rawToken: string): Promise<void> {
  * Strictly adheres to PRD FR-A.6 (user existence check on every call).
  */
 export async function getSessionUser() {
-  const rawToken = cookies().get(SESSION_COOKIE_NAME)?.value;
-  if (!rawToken) {
+  const allCookies = cookies().getAll(SESSION_COOKIE_NAME);
+  if (!allCookies || allCookies.length === 0) {
     return null;
   }
 
-  const tokenHash = hashToken(rawToken);
+  // Iterate over tokens in reverse order (most recent first) to find the active session
+  for (let i = allCookies.length - 1; i >= 0; i--) {
+    const rawToken = allCookies[i]?.value;
+    if (!rawToken) continue;
 
-  const session = await prisma.session.findUnique({
-    where: { tokenHash },
-    include: {
-      user: {
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          createdAt: true,
+    const tokenHash = hashToken(rawToken);
+
+    const session = await prisma.session.findUnique({
+      where: { tokenHash },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            createdAt: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  if (!session) {
-    return null;
+    if (!session) {
+      continue;
+    }
+
+    // Reject expired sessions
+    if (session.expiresAt <= new Date()) {
+      await prisma.session.delete({ where: { id: session.id } }).catch(() => {});
+      continue;
+    }
+
+    // PRD FR-A.6: A deleted user's session stops working at once.
+    if (!session.user) {
+      continue;
+    }
+
+    return session.user;
   }
 
-  // Reject expired sessions
-  if (session.expiresAt <= new Date()) {
-    await prisma.session.delete({ where: { id: session.id } }).catch(() => {});
-    return null;
-  }
-
-  // PRD FR-A.6: A deleted user's session stops working at once.
-  if (!session.user) {
-    return null;
-  }
-
-  return session.user;
+  return null;
 }

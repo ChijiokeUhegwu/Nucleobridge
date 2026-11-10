@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashToken } from '@/lib/auth';
-import { SESSION_COOKIE_NAME, sessionCookieOptions, createSession } from '@/lib/session';
+import {
+  createSession,
+  invalidateExistingSession,
+  setSessionCookie,
+} from '@/lib/session';
 import { otpVerifySchema, validationErrorResponse } from '@/lib/auth-validation';
 
 export async function POST(request: Request) {
@@ -91,6 +95,9 @@ export async function POST(request: Request) {
       });
     }
 
+    // Invalidate and delete any existing active session(s) sent by this browser in PostgreSQL
+    await invalidateExistingSession(request);
+
     // Generate fresh session token and persist SHA-256 hash in PostgreSQL (PRD FR-A.3)
     const sessionToken = await createSession(user.id);
 
@@ -104,7 +111,7 @@ export async function POST(request: Request) {
       },
     });
 
-    response.cookies.set(SESSION_COOKIE_NAME, sessionToken, sessionCookieOptions);
+    setSessionCookie(response, sessionToken);
 
     return response;
   } catch (error) {
