@@ -38,6 +38,28 @@ export function setSessionCookie(response: NextResponse, sessionToken: string): 
 }
 
 /**
+ * Clears the session cookie on a NextResponse by expiring it immediately (Max-Age=0).
+ * Also cleans up any potential legacy subpath cookies to ensure complete removal.
+ */
+export function clearSessionCookie(response: NextResponse): void {
+  response.cookies.set(SESSION_COOKIE_NAME, '', {
+    ...sessionCookieOptions,
+    path: '/api/auth',
+    maxAge: 0,
+  });
+  response.cookies.set(SESSION_COOKIE_NAME, '', {
+    ...sessionCookieOptions,
+    path: '/auth',
+    maxAge: 0,
+  });
+  response.cookies.set(SESSION_COOKIE_NAME, '', {
+    ...sessionCookieOptions,
+    path: '/',
+    maxAge: 0,
+  });
+}
+
+/**
  * Extracts all session tokens from incoming cookies() store and raw Request Cookie header.
  */
 export function extractSessionTokens(request?: Request): string[] {

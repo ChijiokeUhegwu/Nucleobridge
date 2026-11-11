@@ -1,0 +1,3 @@
+# docs/reset-kills-other-session.md
+
+A password reset implies a loss of account control or a potential security breach, requiring the immediate termination of all active sessions to evict potential attackers, whereas an ordinary password change assumes the legitimate user is already securely authenticated and simply updating their credentials. However, highly regulated industries—such as banking, healthcare, and defense—treat both actions identically, aggressively wiping all sessions in both scenarios to enforce strict zero-trust compliance and eliminate any risk of stale session hijacking.

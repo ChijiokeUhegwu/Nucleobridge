@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { hashPassword, hashToken } from '@/lib/auth';
 import { resetPasswordSchema, validationErrorResponse } from '@/lib/auth-validation';
 import { enforceRateLimit } from '@/lib/rate-limit';
+import { clearSessionCookie } from '@/lib/session';
 
 export async function POST(request: Request) {
   try {
@@ -41,9 +42,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Hash new password and update user record
+    // 1. Hash new password and update user record
     const newPasswordHash = await hashPassword(cleanPassword);
 
+    // Atomically update password, consume reset token, and enforce global session invalidation
     await prisma.$transaction([
       prisma.user.update({
         where: { id: resetRecord.userId },
@@ -53,11 +55,21 @@ export async function POST(request: Request) {
         where: { id: resetRecord.id },
         data: { usedAt: new Date() },
       }),
+      // 2. Destroy all active sessions for this user across all devices
+      prisma.session.deleteMany({
+        where: { userId: resetRecord.userId },
+      }),
     ]);
 
-    return NextResponse.json({
+    // 4. Return success response forcing user to log in from scratch
+    const response = NextResponse.json({
       message: 'Password successfully updated. You can now sign in with your new password.',
     });
+
+    // 3. Clear any existing session cookie on the current request (Max-Age=0)
+    clearSessionCookie(response);
+
+    return response;
   } catch (error) {
     console.error('Password reset confirmation error:', error);
     return NextResponse.json(

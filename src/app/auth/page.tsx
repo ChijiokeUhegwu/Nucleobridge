@@ -1329,6 +1329,8 @@ function ResetPasswordView({ initialToken }: { initialToken: string }) {
   const [token, setToken] = useState(initialToken);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -1406,52 +1408,63 @@ function ResetPasswordView({ initialToken }: { initialToken: string }) {
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.fieldGroup}>
-          <label htmlFor="resetToken" className={`text-label-medium ${styles.label}`}>
-            Reset Token
-          </label>
-          <input
-            id="resetToken"
-            type="text"
-            required
-            value={token}
-            onChange={(event) => setToken(event.target.value)}
-            placeholder="Paste your 32-character reset token"
-            className={styles.input}
-          />
-        </div>
-
-        <div className={styles.fieldGroup}>
           <label htmlFor="newPassword" className={`text-label-medium ${styles.label}`}>
             New Password
           </label>
-          <input
-            id="newPassword"
-            type="password"
-            required
-            autoComplete="new-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            onBlur={(event) => setPassword(trimPassword(event.target.value))}
-            placeholder="Minimum 8 characters"
-            className={styles.input}
-          />
+          <div className={styles.passwordField}>
+            <input
+              id="newPassword"
+              type={showPassword ? 'text' : 'password'}
+              required
+              minLength={8}
+              autoComplete="new-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              onBlur={(event) => setPassword(trimPassword(event.target.value))}
+              placeholder="Minimum 8 characters"
+              aria-label="New Password"
+              className={`${styles.input} ${styles.passwordInput}`}
+            />
+            <button
+              type="button"
+              className={styles.passwordToggle}
+              onClick={() => setShowPassword((visible) => !visible)}
+              aria-label={showPassword ? 'Hide new password' : 'Show new password'}
+              aria-pressed={showPassword}
+            >
+              <EyeIcon hidden={showPassword} />
+            </button>
+          </div>
         </div>
 
         <div className={styles.fieldGroup}>
           <label htmlFor="confirmNewPassword" className={`text-label-medium ${styles.label}`}>
             Confirm New Password
           </label>
-          <input
-            id="confirmNewPassword"
-            type="password"
-            required
-            autoComplete="new-password"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            onBlur={(event) => setConfirmPassword(trimPassword(event.target.value))}
-            placeholder="Repeat new password"
-            className={styles.input}
-          />
+          <div className={styles.passwordField}>
+            <input
+              id="confirmNewPassword"
+              type={showConfirmPassword ? 'text' : 'password'}
+              required
+              minLength={8}
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              onBlur={(event) => setConfirmPassword(trimPassword(event.target.value))}
+              placeholder="Repeat new password"
+              aria-label="Confirm New Password"
+              className={`${styles.input} ${styles.passwordInput}`}
+            />
+            <button
+              type="button"
+              className={styles.passwordToggle}
+              onClick={() => setShowConfirmPassword((visible) => !visible)}
+              aria-label={showConfirmPassword ? 'Hide confirm new password' : 'Show confirm new password'}
+              aria-pressed={showConfirmPassword}
+            >
+              <EyeIcon hidden={showConfirmPassword} />
+            </button>
+          </div>
         </div>
 
         <button
