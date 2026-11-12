@@ -119,6 +119,8 @@ model User {
   emailVerificationCodeHash  String?
   emailVerificationExpiresAt DateTime?
 
+  deletionRequestedAt        DateTime?
+
   progress            LearnerStepProgress[]
   snapshots           WorkspaceSnapshot[]
   attempts            CheckAttempt[]

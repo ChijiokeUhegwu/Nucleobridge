@@ -177,6 +177,7 @@ export async function getSessionUser() {
             firstName: true,
             lastName: true,
             createdAt: true,
+            deletionRequestedAt: true,
           },
         },
       },
@@ -193,7 +194,7 @@ export async function getSessionUser() {
     }
 
     // PRD FR-A.6: A deleted user's session stops working at once.
-    if (!session.user) {
+    if (!session.user || session.user.deletionRequestedAt !== null) {
       continue;
     }
 
