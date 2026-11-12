@@ -1,0 +1,13 @@
+code to test the cron job: curl.exe -X POST http://localhost:3000/api/cron/purge-accounts
+
+prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."firstName", "public"."User"."lastName", 
+"public"."User"."passwordHash" FROM "public"."User" WHERE ("public"."User"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
+ POST /api/auth/login-password 401 in 1022ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 3.1s (532 modules)
+ POST /api/cron/purge- 404 in 4250ms
+ ✓ Compiled /api/cron/purge-accounts in 353ms (301 modules)
+prisma:query SELECT "public"."User"."id", "public"."User"."email", "public"."User"."deletionRequestedAt" FROM "public"."User" WHERE ("public"."User"."deletionRequestedAt" IS NOT NULL AND "public"."User"."deletionRequestedAt" <= $1) OFFSET $2       
+[Hard Delete Job] Started. Found 0 accounts to purge.
+[Hard Delete Job] Finished. Successfully purged 0 accounts.
+ POST /api/cron/purge-accounts 200 in 869ms

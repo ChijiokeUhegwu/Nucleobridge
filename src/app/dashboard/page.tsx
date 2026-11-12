@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { authHref } from '@/lib/auth-routes';
 import { CATALOG_PREVIEW } from '@/lib/catalog-preview';
+import DeleteAccountSection from './DeleteAccountSection';
 import styles from './dashboard.module.css';
 
 type SessionUser = {
@@ -244,6 +245,8 @@ export default function DashboardPage() {
             ))}
           </div>
         </section>
+
+        <DeleteAccountSection />
       </main>
     </div>
   );

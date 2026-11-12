@@ -1,0 +1,230 @@
+/* ----------------------------------------------------------------------------
+ * NUCLEOBRIDGE DELETE ACCOUNT (delete-account.module.css)
+ * Strict Rule: Colors applied ONLY via semantic tokens from main-tokens.css.
+ * ---------------------------------------------------------------------------- */
+
+.dangerZone {
+  margin-top: 40px;
+  padding: 20px 24px;
+  background-color: var(--color-surface-container-low);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 12px;
+  box-shadow: var(--shadow-soft);
+}
+
+.dangerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.dangerTitle {
+  color: var(--color-error);
+}
+
+.dangerBadge {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background-color: var(--color-surface-container);
+  color: var(--color-on-surface-variant);
+  border: 1px solid var(--color-outline-variant);
+  white-space: nowrap;
+}
+
+.dangerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.dangerItemTitle {
+  color: var(--color-on-surface);
+  margin-bottom: 4px;
+}
+
+.dangerText {
+  max-width: 680px;
+  color: var(--color-on-surface-variant);
+  line-height: 1.5;
+}
+
+.deleteTrigger {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--color-error);
+  border: 1px solid var(--color-error);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.deleteTrigger:hover {
+  background-color: var(--color-error-container);
+  color: var(--color-on-error-container);
+}
+
+.deleteTrigger:focus-visible,
+.cancelButton:focus-visible,
+.confirmButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Confirmation dialog */
+.dialog {
+  width: calc(100% - 32px);
+  max-width: 480px;
+  max-height: calc(100vh - 32px);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  border: none;
+  background-color: transparent;
+  color: var(--color-on-surface);
+}
+
+.dialog::backdrop {
+  background-color: var(--color-scrim);
+  opacity: 0.45;
+}
+
+.panel {
+  padding: 28px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 16px;
+  box-shadow: var(--shadow-hard);
+}
+
+.modalTitle {
+  color: var(--color-error);
+  margin-bottom: 12px;
+}
+
+.modalWarning {
+  color: var(--color-on-surface);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.modalNote {
+  margin-top: 12px;
+  color: var(--color-on-surface-variant);
+  line-height: 1.5;
+}
+
+.errorBanner {
+  margin-top: 18px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background-color: var(--color-error-container);
+  border: 1px solid var(--color-error);
+}
+
+.errorText {
+  color: var(--color-on-error-container);
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.cancelButton {
+  padding: 10px 18px;
+  border-radius: 8px;
+  background-color: var(--color-surface-container);
+  color: var(--color-on-surface);
+  border: 1px solid var(--color-outline);
+  font-weight: 500;
+  transition: background-color 0.15s ease;
+}
+
+.cancelButton:hover:not(:disabled) {
+  background-color: var(--color-surface-container-high);
+}
+
+.cancelButton:disabled {
+  opacity: 0.6;
+}
+
+.confirmButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 160px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background-color: var(--color-error);
+  color: var(--color-on-error);
+  font-weight: 600;
+  transition: opacity 0.15s ease;
+}
+
+.confirmButton:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.confirmButton:disabled {
+  opacity: 0.6;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2s;
+  }
+}
+
+@media (max-width: 640px) {
+  .dangerZone {
+    padding: 18px;
+  }
+
+  .dangerHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dangerRow {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .cancelButton,
+  .confirmButton {
+    width: 100%;
+  }
+}
