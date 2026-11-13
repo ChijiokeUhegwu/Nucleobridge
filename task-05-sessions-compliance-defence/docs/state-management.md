@@ -1,0 +1,10 @@
+# docs/state-management.md
+
+## Did we actually need a library for this?
+No, we did not genuinely need an external state management library to accomplish this task. I added Zustand largely because it is an industry expectation to have a dedicated state manager in a modern React application. For a feature this simple, we could have used React's built-in Context API, or even simpler, passed the typed email through the URL as a query parameter (e.g., `/forgot-password?email=...`) using Next.js routing. Introducing a third-party library to pass a single string between two adjacent components is technically over-engineering.
+
+## When an application genuinely requires global state management
+An application genuinely requires a dedicated state management library when it hits the "prop drilling" ceiling. This occurs when highly complex, frequently changing data (like a shopping cart, a complex multi-step user onboarding wizard, or a real-time collaborative document) needs to be accessed and mutated by dozens of deeply nested, unrelated components spread across entirely different branches of the component tree. Many applications never reach this level of client-side complexity, relying mostly on server state, yet developers frequently install Redux or Zustand on day one purely out of habit.
+
+## Why I Removed Zustand After the Test
+Although Zustand successfully demonstrated client-side global state, I intentionally uninstalled it and reverted the implementation after capturing the evidence. In a Next.js application, utilizing a global state hook requires placing `"use client"` at the top of the files, which inadvertently pushes the architecture away from fast, secure Server Components. Keeping an unnecessary library introduces immediate technical debt, adds unnecessary JavaScript to the bundle size, and increases cognitive load by providing a second way to manage data flows. By removing it, I avoid premature abstraction and adhere to the core React principle of keeping state as simple and localized as possible until the application's complexity genuinely forces my hand.
