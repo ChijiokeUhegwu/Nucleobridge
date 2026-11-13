@@ -13,6 +13,7 @@ type SessionUser = {
   email: string;
   firstName: string | null;
   lastName: string | null;
+  role: 'USER' | 'ADMIN';
 };
 
 export default function DashboardPage() {
@@ -159,6 +160,11 @@ export default function DashboardPage() {
         </Link>
 
         <div className={styles.headerActions}>
+          {user.role === 'ADMIN' && (
+            <Link href="/admin" className={`text-label-medium ${styles.adminSwitchLink}`}>
+              Switch to Admin View
+            </Link>
+          )}
           <span className={`text-label-medium ${styles.userEmail}`}>{user.email}</span>
           <button
             type="button"

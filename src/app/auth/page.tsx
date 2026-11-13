@@ -377,10 +377,13 @@ function LoginView() {
         throw new Error(data.error || 'Failed to sign in.');
       }
 
-      setSuccess('Signed in successfully! Redirecting to your dashboard...');
-      setTimeout(() => {
-        router.replace('/dashboard');
-      }, 1000);
+      const redirectTo = data.redirectTo === '/admin' ? '/admin' : '/dashboard';
+      setSuccess(
+        redirectTo === '/admin'
+          ? 'Signed in successfully! Redirecting to your admin view...'
+          : 'Signed in successfully! Redirecting to your dashboard...'
+      );
+      router.replace(redirectTo);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
     } finally {
@@ -462,10 +465,13 @@ function LoginView() {
         throw new Error(data.error || 'Incorrect or expired code.');
       }
 
-      setSuccess('Code verified! Signed in successfully.');
-      setTimeout(() => {
-        router.replace('/dashboard');
-      }, 1000);
+      const redirectTo = data.redirectTo === '/admin' ? '/admin' : '/dashboard';
+      setSuccess(
+        redirectTo === '/admin'
+          ? 'Code verified! Redirecting to your admin view...'
+          : 'Code verified! Signed in successfully.'
+      );
+      router.replace(redirectTo);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
     } finally {

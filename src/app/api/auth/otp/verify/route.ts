@@ -100,14 +100,17 @@ export async function POST(request: Request) {
 
     // Generate fresh session token and persist SHA-256 hash in PostgreSQL (PRD FR-A.3)
     const sessionToken = await createSession(user.id);
+    const redirectTo = user.role === 'ADMIN' ? '/admin' : '/dashboard';
 
     const response = NextResponse.json({
       message: 'Signed in successfully.',
+      redirectTo,
       user: {
         id: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        role: user.role,
       },
     });
 

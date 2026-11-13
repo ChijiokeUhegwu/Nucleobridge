@@ -1,0 +1,84 @@
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 36px 32px 56px;
+}
+
+.intro {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: var(--shadow-soft);
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-primary);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.title {
+  color: var(--color-on-surface);
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  color: var(--color-on-surface-variant);
+  line-height: 1.6;
+  max-width: 760px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 16px;
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+  color: var(--color-on-surface);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.card:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.cardTitle {
+  color: var(--color-on-surface);
+}
+
+.cardText {
+  color: var(--color-on-surface-variant);
+  line-height: 1.55;
+}
+
+.cardAction {
+  color: var(--color-primary);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+@media (max-width: 720px) {
+  .main {
+    padding: 24px 16px 40px;
+  }
+
+  .intro {
+    padding: 24px;
+  }
+}

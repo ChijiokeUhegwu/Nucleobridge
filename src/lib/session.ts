@@ -178,6 +178,7 @@ export async function getSessionUser() {
             lastName: true,
             createdAt: true,
             deletionRequestedAt: true,
+            role: true,
           },
         },
       },
