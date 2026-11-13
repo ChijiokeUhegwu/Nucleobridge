@@ -300,8 +300,8 @@ export default function PrivacyPage() {
               </li>
               <li>
                 Payment and entitlement records may be kept longer to meet tax, accounting, audit,
-                and fraud-prevention requirements. After account deletion, payment rows are kept
-                without a learner link.
+                and fraud-prevention requirements. After account deletion, payment and entitlement
+                rows are kept without a learner link.
               </li>
               <li>
                 Security and diagnostic logs are generally kept for shorter periods unless needed

@@ -78,11 +78,7 @@ export async function purgeExpiredAccounts() {
       await tx.session.deleteMany({ where: { userId: account.id } });
       await tx.passwordResetToken.deleteMany({ where: { userId: account.id } });
 
-      // 2. Delete payments and entitlements
-      await tx.entitlement.deleteMany({ where: { userId: account.id } });
-      await tx.payment.deleteMany({ where: { userId: account.id } });
-
-      // 3. Delete learning and analytics records
+      // 2. Delete learning and analytics records
       await tx.learnerStepProgress.deleteMany({ where: { userId: account.id } });
       await tx.workspaceSnapshot.deleteMany({ where: { userId: account.id } });
       await tx.checkAttempt.deleteMany({ where: { userId: account.id } });
@@ -90,7 +86,7 @@ export async function purgeExpiredAccounts() {
       await tx.hintQuota.deleteMany({ where: { userId: account.id } });
       await tx.learnerEvent.deleteMany({ where: { userId: account.id } });
 
-      // 4. Finally hard delete the User record itself
+      // 3. Finally hard delete the User record itself
       await tx.user.delete({ where: { id: account.id } });
     });
 

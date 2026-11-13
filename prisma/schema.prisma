@@ -348,7 +348,7 @@ model PaymentEvent {
 
 model Entitlement {
   id        String            @id @default(cuid())
-  userId    String
+  userId    String?
   kind      EntitlementKind   @default(PRO)
   source    EntitlementSource
   paymentId String?
@@ -357,7 +357,7 @@ model Entitlement {
   status    EntitlementStatus @default(ACTIVE)
   createdAt DateTime          @default(now())
 
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
 
   @@unique([paymentId])
