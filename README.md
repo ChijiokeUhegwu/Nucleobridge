@@ -123,7 +123,7 @@ Open `http://localhost:3000`.
 
 - There is no seed script and no `db:seed` command.
 - If port 3000 is already in use, Next.js starts on another port. Set `NEXTAUTH_URL` to that origin so verification, reset, and welcome links point at the running server.
-- `EMAIL_SERVER_SECURE` and `CRON_SECRET` are read by the code but are missing from `.env.example`; add them manually when needed.
+- Set `CRON_SECRET` to a high-entropy value before invoking the purge route. Set `EMAIL_SERVER_SECURE` to `true` for implicit TLS on port 465, or `false` for STARTTLS on port 587.
 - `NEXTAUTH_SECRET` is present in the template but is not used by the current custom auth implementation.
 - The schema includes a nullable `Entitlement.userId` with `onDelete: SetNull`, but the corresponding migration has not yet been applied to the live database. See the known defects below.
 
@@ -140,9 +140,9 @@ Names only. Do not commit values. The current-use column records what the code a
 | `NEXTAUTH_URL` | Base URL used to build verification, reset, and welcome links. It is not an Auth.js session setting. |
 | `NEXTAUTH_SECRET` | Template only. No Auth.js signing exists. |
 | `EMAIL_SERVER_HOST`, `EMAIL_SERVER_PORT`, `EMAIL_SERVER_USER`, `EMAIL_SERVER_PASSWORD`, `EMAIL_FROM` | SMTP transport used by `src/lib/mail.ts`. Missing credentials trigger the console mock. |
-| `EMAIL_SERVER_SECURE` | Read by `src/lib/mail.ts`; missing from `.env.example`. |
+| `EMAIL_SERVER_SECURE` | Read by `src/lib/mail.ts`; `true` for implicit TLS on port 465, `false` for STARTTLS on port 587. |
 | `SIGNUPS_ENABLED` | Emergency switch that blocks new account creation when set to `"false"`. |
-| `CRON_SECRET` | Bearer secret for `POST /api/cron/purge-accounts`; missing from `.env.example`. |
+| `CRON_SECRET` | Bearer secret for `POST /api/cron/purge-accounts`. |
 | `FLUTTERWAVE_PUBLIC_KEY`, `FLUTTERWAVE_SECRET_KEY`, `FLUTTERWAVE_WEBHOOK_HASH` | Reserved; no payment code exists yet. |
 | `FREE_MODEL_API_KEY`, `PAID_MODEL_API_KEY`, `EMBEDDING_MODEL_API_KEY` | Reserved; no AI or embedding code exists yet. |
 | `DATASET_STORAGE_URL`, `DATASET_STORAGE_SECRET_KEY` | Reserved; no dataset storage code exists yet. |
@@ -176,7 +176,7 @@ Names only. Do not commit values. The current-use column records what the code a
 8. **Medium: terms acceptance is not persisted.** The signup form and API require the checkbox, but the `User` model has no `termsAcceptedAt` or `termsVersion` field, so the platform cannot prove which learner accepted which version.
 9. **Medium: the Terms and Privacy pages are adapted templates, not reviewed legal documents.** Qualified counsel must review them before launch.
 10. **Medium: the purge cron endpoint relies only on a shared bearer secret.** It has no IP allowlist or signed-JWT verification.
-11. **Medium: the environment template has gaps.** `CRON_SECRET` and `EMAIL_SERVER_SECURE` are read by code but missing from `.env.example`; `NEXTAUTH_SECRET` is unused; the shipped SMTP placeholders can trigger a failed connection instead of the console mock.
+11. **Medium: the environment template still contains stale entries.** `NEXTAUTH_SECRET` is unused; the shipped SMTP placeholders can trigger a failed connection instead of the console mock; the reserved payment, AI, and storage keys are placeholders for unbuilt features.
 12. **Low: the viewport blocks pinch zoom.** `src/app/layout.tsx` sets `maximumScale: 1`, which removes a core accessibility control on the phones this product targets.
 13. **Low: six-digit verification codes use unsalted SHA-256 rather than a keyed HMAC.** The ten-minute expiry, five-attempt limit, and atomic consumption mitigate this, but a database reader can build a small lookup table.
 14. **Low: the auth page is a single ~1,250-line client component.** It works, but splitting the views would reduce regression risk.
